@@ -1,0 +1,5 @@
+FS Method, Matrix, Prec, Recall
+fdr,P,0.48,0.0727272727273
+l1svc,P,nan,0.0
+boruta,P,0.461538461538,0.0727272727273
+jmi,P,0.5,0.0242424242424

@@ -1,0 +1,199 @@
+{% from '_macros.html' import render_question_mark, render_field_error %}
+{% extends 'base.html' %}
+{% set active_page = "" %}
+{% set max_file_size = 'Maximum file size: 100 MB' %}
+{% set tooltips = {
+   "analysis_name": ("Name of the analysis","Please name your analysis, so when you hopefully return later to analyse another dataset,
+                    or this one with other parameters, you can view th results of either of your previous analyses.<br><br>
+                    It has to be at least 3 character long and cannot be longer than 25 characters."),
+   "fs": ("Skip feature selection","You have uploaded a metadata file, so  "+ config['APP_NAME']+" can perform feature selection on your dataset.
+          Although this is highly recommended, it is optional. <br><br> However, if you choose not to perform feature selection,
+          " +config['APP_NAME']+ " will only use the n features in each dataset with the largest variance, where n is the number
+          of overlapping samples between the datasets."),
+   "fs_method": ("Feature selection (FS) method","
+                  <b>L1:</b> The L1-norm regularisation results in sparse solutions thus forces the learner it is used with to
+                  shrink some features' coefficients to zero. For discrete outcome variables  "+ config['APP_NAME']+" uses Support Vector Classifier
+                  while for continuous features the LASSO regression.
+                  <br><br>
+                  <b>JMI:</b> The Joint Mutual Information FS method uses information theory based metrics to assess the importance of
+                  features. Similarly to Boruta it works best when the number of samples is comparable with the number of features.
+                  The current implementation works best with discrete outcome variables, therefore for continuous metadata variables  "+ config['APP_NAME']+"
+                  will use the L1 based Lasso Regression will be used.<br><br>
+                  <b>Boruta:</b> a random forest based ensemble FS technique which copes really well
+                  with non-normalised and mixed-variance features. It is an all-relevant FS method, so it will try to capture any feature that
+                  has something to say about your outcome variable. It performs best when then number of samples is comparable to or larger than
+                  the number of features. Boruta is only supported for categorical outcome variables. For continuous metadata variables  "+ config['APP_NAME']+"
+                  will use the L1 based Lasso Regression will be used.<br><br>
+                  <b>FDR:</b> This is a classical univariate FS technique filters out features whose p-value after the
+                  Benjamini-Hochberg correction for multiple testing is larger than 0.05. The p-values are derived from  the ANOVA F-value
+                  if the outcome is discrete. If the outcome is continuous its correlation coefficient with each regressor is converted into
+                  an F-score to obtain a p-value."),
+   "fs_cols": ("Metadata variable", "The column of the uploaded metadata file which will be used to perform the feature selection. All categorical metadata
+                columns which had less than " + config['MIN_SAMPLE_PER_CLASS']|string + " samples per factor level are removed and cannot reliably
+                used for feature selection."),
+   "multi_corr": ("Correction for multiple testing","Since we have calculated several hundred correlations from our dataset, we need to account
+                  for multiple testing. Below you can choose the method to use and the adjusted p-value."),
+   "multi_corr_method": ("Method for correction","<b>Benjamini-Hochberg: </b>This is the classic method that started the False Discovery Rate
+                          method in life sciences. Since then, it has largely replaced the much harsher Bonferroni method. Let's say we
+                          perform a 1000 tests. Then rejecting the null hypothesis at &alpha;=0.05 would mean, that we would end up with 50
+                          false positives. The Bonferroni method would adjust &alpha; to 0.05/1000=0.00005 ensuring that our Familiy Wise Error
+                          Rate (FWER) is still 0.05. This leads to a lot of false negatives. FDR instead ensures that out of the tests
+                          we reject at &alpha;=0.05, only about 5% are actually false. <br><br>
+                         <b>Benjamini-Yekutieli: </b>This more recent version of the FDR correction accounts for the fact that not all of our
+                         predictors might be actually independent, and they could be correlated. The BY FDR allows us to use FDR even in the
+                         scenario, when we have negative correlations between our predictors.<br><br>
+                         <b>Bonferroni: </b>See description above."),
+   "alpha_val": ("&alpha; for the multiple correction method","At what value should we reject correlations after the correction for multiple
+                testing was performed. This will be automatically divided by the number of tests for the Bonferroni.
+                correction"),
+
+   "reg_glasso": ("Regularisation of Glasso", "Similarly to how &lambda; controls the regularisation in a Lasso regression, in the
+                       Graphical Lasso larger &lambda; will lead to sparser networks. Therefore finding the right &lambda; is crucial for
+                       inferring the true network topology our features. <br><br>Classical model selection methods such as the Akaike Information
+                       Criterion or Bayesian Information Criterion do not perform well in p>n situations, while using cross-validation to
+                       find the optimal &lambda; can lead to overfitting. <br><br>Therefore CorrMapper uses the Stability Approach to Regularization
+                       Selection (StARS) by Liu et al., 2010, which applies the least amount of regularization that simultaneously makes a
+                       graph sparse and replicable under random sampling. "),
+   "lambda_val": ("&Lambda; threshold for StARS", "The &Lambda; threshold controls the density of the selected network. Since &Lambda;=1/&lambda;
+                  larger values of &Lambda; will result in denser network. Note however that &Lambda; and &Lambda; threshold are different.
+                  Please refer to the paper for details. The authors suggest 0.05 or 0.1 as sensible default values in their paper."),
+   "filter": ("Filter certain genomic correlations","Using the two options below, you can discard some of the correlations from those that
+                survived the feature selection and the correction for multiple testing."),
+   "discard_overlap": ("Discard overlapping correlations","If this is enabled, all correlations will be discarded that are between genomic
+                        elements which overlap with each other on the chromosome."),
+   "constrain_corr": ("Constrain maximum distance of correlations","If this is enabled, all correlations will be discarded whose genomic
+                        genomic elements are further away from each other than the specified distance in the 'Maximum distance of correlations'
+                        field."),
+   "constrain_dist": ("Maximum distance of correlations","The distance specified here is treated as Mega-bases on the chromosome. If it is left
+                      0, then the maximum distance of correlations is the full length of the chromosome a given genomic features is located on.
+                      This way it is easy to restrain all correlations to intra-chromosomal ones only.")
+} -%}
+
+{% block layout %}
+{% if too_many_analyses == 1 %}
+<div class="row">
+    <div class="col-lg-6 col-lg-offset-3">
+        <div class="alert alert-info" role="alert">
+            <h1>Exceeded the number of maximum analyses</h1>
+            We are sorry, but you exceeded the maximum number of analyses. <br><br>
+            Currently we can only store the output of {{ config['ACTIVE_ANALYSIS_PER_USER'] }}
+            analyses per user at any moment.<br><br>
+            Please delete one of your existing one to start a new analysis, but be aware that
+            you can only have {{ config['ANALYSIS_PER_USER'] }} analyses all together. <br><br>
+            Thank you for your understanding,<br>
+             {{ config['APP_NAME'] }} team
+        </div>
+    </div>
+</div>
+{% elif too_many_analyses == 2 %}
+<div class="row">
+    <div class="col-lg-6 col-lg-offset-3">
+        <div class="alert alert-danger" role="alert">
+            <h1>Exceeded the total number of analyses</h1>
+            We are sorry, but currently we can only support {{ config['ANALYSIS_PER_USER'] }} analyses per user. <br><br>
+            If you would need to analyse more, please write us using the contact menu.
+            <br><br>
+            Thank you for your understanding,<br>
+             {{ config['APP_NAME'] }} team
+        </div>
+    </div>
+</div>
+{% else %}
+<form id="analysis-form" method="POST" enctype="multipart/form-data">
+    {{form.hidden_tag()}}
+    <div class="row ">
+        <div class="col-lg-6 col-lg-offset-3">
+            <div class="page-header">
+                <h1>Analysis for {{ study_name }}</h1>
+            </div>
+            <!-- ------------------ NAME OF THE ANALYSIS ------------------ -->
+            <div class="panel panel-default">
+                <div class="panel-heading">{{ form.analysis_name.label }}
+                    {{ render_question_mark(tooltips["analysis_name"]) }}
+                </div>
+                <div class="panel-body">
+                    {{ form.analysis_name(class_="form-control", maxlength="25") }}
+                    {{ render_field_error(form.analysis_name) }}
+                </div>
+            </div>
+            <!-- ------------------ FEATURE SELECTION --------------------- -->
+
+            <!-- if fs=False we still render this and hide it with JS, otherwise
+                 the form validation would go haywire on the server side    -->
+            <div class="panel panel-default" id="fs_panel">
+                <div class="panel-heading"><b>Feature selection</b>
+                </div>
+                <div class="panel-body">
+                    {{ form.fs() }} {{ form.fs.label }} {{ render_question_mark(tooltips["fs"]) }}
+                    <div id="fs_method_panel">
+                        <br>
+                        {{ form.fs_method.label}}{{ render_question_mark(tooltips["fs_method"]) }}
+                        {{ form.fs_method(class_="form-control") }}
+                        <br>
+                        {{ form.fs_cols.label}}{{ render_question_mark(tooltips["fs_cols"]) }}
+                        {{ form.fs_cols(class_="form-control") }}
+                    </div>
+                </div>
+            </div>
+            <!-- ----------------- NETWORK SELECTION ---------------------- -->
+            <div class="panel panel-default">
+                <div class="panel-heading"><b>Network selection</b>
+                    {{ render_question_mark(tooltips["reg_glasso"]) }}
+                </div>
+                <div class="panel-body">
+                    {{ form.lambda_val.label}} {{ render_question_mark(tooltips["lambda_val"]) }}
+                    {{ form.lambda_val(class_="form-control", type="number", step="0.01") }}
+                    {{ render_field_error(form.lambda_val) }}
+                </div>
+            </div>
+            <!-- ----------------- MULTIPLE CORRECTION -------------------- -->
+            <div class="panel panel-default">
+                <div class="panel-heading"><b>Correction for multiple testing</b>
+                    {{ render_question_mark(tooltips["multi_corr"]) }}
+                </div>
+                <div class="panel-body">
+                    {{ form.multi_corr_method.label}}{{ render_question_mark(tooltips["multi_corr_method"]) }}
+                    {{ form.multi_corr_method(class_="form-control") }}
+                    <br>
+                    {{ form.alpha_val.label}} {{ render_question_mark(tooltips["alpha_val"]) }}
+                    {{ form.alpha_val(class_="form-control", type="number", step="0.01") }}
+                    {{ render_field_error(form.alpha_val) }}
+                </div>
+            </div>
+            <!-- ------------------ DISCARD CORRELATIONS ------------------ -->
+            <div class="panel panel-default" id="annotation_panel">
+                <div class="panel-heading"><b>Filter certain genomic correlations</b>
+                    {{ render_question_mark(tooltips["filter"]) }}
+                </div>
+                <div class="panel-body">
+                    {{ form.discard_overlap() }} {{ form.discard_overlap.label }}
+                    {{ render_question_mark(tooltips["discard_overlap"]) }}
+                    <br><br>
+                    {{ form.constrain_corr() }} {{ form.constrain_corr.label }}
+                    {{ render_question_mark(tooltips["constrain_corr"]) }}
+                    <div id="constrain_dist_panel">
+                        <br>
+                        {{ form.constrain_dist.label}} {{ render_question_mark(tooltips["constrain_dist"]) }}
+                        {{ form.constrain_dist(class_="form-control", type="number", step="1") }}
+                        {{ render_field_error(form.constrain_dist) }}
+                    </div>
+                </div>
+            </div>
+            <button type="button" id="analyse-button" class="btn btn-info btn-block"><h4><strong><span id="analyse-button-text">ANALYSE</span></strong></h4></button>
+        </div>
+    </div>
+</form>
+
+<script type="text/javascript">
+    var fs = "{{ fs }}";
+    var annotation = "{{ annotation }}";
+    var cols = {{ cols|tojson }};
+    var csrftoken = "{{ csrf_token() }}";
+    var ANALYSIS_URL  = "{{ url_for('analysis', user_id=user_id, study_id=study_id) }}";
+    var PROFILE_URL = "{{ url_for('profile') }}";
+    var ERROR_URL = "{{ url_for('something_wrong', page='analysis') }}";
+    var guest = {{ current_user.has_role('guest')|int }};
+</script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/analysis.js') }}"></script>
+{% endif %}
+{% endblock %}

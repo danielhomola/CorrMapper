@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% set active_page = "index" %}
+{% block body_class %}main main-index{% endblock %}
+
+{% block layout %}
+<div class="jumbotron">
+    <div class="row">
+        <div class="col-md-12">
+        <div class="embed-responsive embed-responsive-16by9">
+                <iframe class="embed-responsive-item" width="1020" height="574" src="https://www.youtube.com/embed/ZNwc5aCFonI" allowfullscreen="allowfullscreen" ></iframe>
+            </div>
+        </div>
+        <div class="col-md-9" style="text-align: justify;">
+
+            <p style="margin-top: 40px">
+                {{ config['APP_NAME'] }} helps to <b>explore, integrate and visualise</b> the data of complex biological studies.
+                It requires one or two omics datasets, along with a metadata table, which holds
+                clinically or biologically relevant information about these samples.
+                <br><br>
+                Once all these files are uploaded, the metadata could be mapped onto the low-dimensional representation of the omics
+                datasets in an <b>interactive dashboard.</b> This helps with sample stratification using the various clinical
+                metadata variables.
+                <br><br>
+                After this initial exploration, {{ config['APP_NAME'] }} offers a range of <b>feature selection</b> algorithms which
+                will find the most discriminatory variables of the omics dataset(s) with respect to a chosen metadata variable, e.g.:
+                cancer vs healthy.
+                <br><br>
+                Finally, the <b>correlation network</b> of these highly discriminatory variables are calculated and visualised in
+                an interactive and novel way.
+                <br><br>
+                Have a look at the <b>demos</b> of CorrMapper's visualisation modules:
+            </p>
+            <p>
+                <a class="btn btn-primary btn-lg" href="{{ url_for('demo_dashboard') }}">
+                    <i class="fa fa-dashboard" aria-hidden="true"></i>Metadata explorer</a>
+                <a class="btn btn-primary btn-lg" href="{{ url_for('demo_network') }}">
+                    <i class="fa fa-bar-chart" aria-hidden="true"></i>Network explorer</a>
+                <a class="btn btn-primary btn-lg" href="{{ url_for('demo_genomic') }}">
+                    <i class="fa fa-area-chart" aria-hidden="true"></i>Genomic explorer</a>
+            </p>
+            <p>
+                <b>Get started</b> by uploading your datasets, or an example dataset.
+            </p>
+            <p>
+                <a class="btn btn-info btn-lg" href="
+                    {% if current_user.is_authenticated %}
+                   {{ url_for('upload') }}
+                    {% else %}
+                    {{url_for_security('login', next=request.path)}}
+                    {% endif %}"
+                ><span class="glyphicon glyphicon-upload glyphicon-black" aria-hidden="true"></span>
+                Upload your dataset</a>
+                <a class="btn btn-info btn-lg" href="{{ url_for('static', filename='exampleDataChin2006.zip') }}">
+                    <i class="fa fa-download" aria-hidden="true"></i>
+                Example datasets</a>
+                <a class="btn btn-info btn-lg" href="http://biorxiv.org/" target="_blank">
+                    <span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span>
+                    <span class="introtext">Read the article</span> </a>
+
+            </p>
+        </div>
+
+        <div class="col-md-3">
+            <img src="{{ url_for('static', filename='img/dna.png') }}" width="230" style="padding-left:15px; margin-top:30px" class="openingImage">
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,110 @@
+
+.title {
+    padding-left: 30px;
+    padding-top: 0px;
+    margin-top: -30px;
+}
+
+.title2{
+  padding-left: 30px;
+  margin-bottom: -10px;
+  padding-top: 0px;
+}
+
+
+.controls {
+    margin-left:3px;
+    padding-top: 15px;
+}
+
+.togglebar {
+    margin-top: 5px;
+}
+
+.label {
+    font: 200 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    fill: #747474;
+}
+
+.labelSource {
+    font-weight: 700;
+    fill: #ce2b35;
+}
+
+.labelOver {
+    font-weight: 700;
+    fill: #2b2b2c;
+}
+
+.labelNotOver {
+    opacity: .3;
+}
+
+.node {
+    fill: #2f2f2f;
+    opacity: .2;
+}
+
+.link {
+    fill: none;
+    pointer-events: none;
+}
+
+.linkOver {
+    opacity: 1;
+}
+
+.linkNotOver {
+    opacity: .08;
+}
+
+.linkFiltered {
+    opacity: 0;
+}
+
+td.details-control {
+    width: 20px;
+    cursor: pointer;
+}
+
+tr.shown td.details-control {
+    width: 20px;
+}
+
+/*This makes the dropdown menus work with hovering automatically #e00*/
+.dropdown:hover .dropdown-menu {
+    display: block;
+    margin-top: 0; // remove the gap so it doesn't close
+}
+
+/* make the menu smaller */
+#vis_nav > .navbar-nav > li > a {padding-top:12px !important; padding-bottom:3px !important;}
+#vis_nav > .navbar {min-height:25px !important}
+
+#tooltip {
+    position: absolute;
+    z-index: 1000;
+    width: auto;
+    height: auto;
+    padding: 10px;
+    background-color: white;
+    opacity: .9;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    -webkit-box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    -moz-box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+}
+
+#tooltip.hidden {
+    display: none;
+}
+
+#tooltip p {
+    margin: 0;
+    font-family: sans-serif;
+    font-size: 12px;
+    line-height: 20px;
+}

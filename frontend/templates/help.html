@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+{% set active_page = "help" %}
+{% block body_class %}main main-index{% endblock %}
+
+{% block layout %}
+<div class="row">
+    <div class="col-xs-10 col-xs-offset-1" style="text-align: justify;">
+        <div class="page-header">
+            <h2>FAQ</h2>
+        </div>
+
+        <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+
+            <div class="panel panel-default">
+                <div class="panel-heading" role="tab" id="headingOne">
+                    <h4 class="panel-title">
+                        <a role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                            <b>Format of data files?</b>
+                        </a>
+                    </h4>
+                </div>
+                <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+                    <div class="panel-body">
+                        Data files must have numeric values. Any column that has a non-numeric value or values which
+                        cannot be coerced to float type will be discarded.
+                        Feature and sample IDs must all be unique, duplicates will be removed. Sample IDs should also match the metadata file's sample IDs, because
+                        only the intersecting samples are used for feature selection. See an example data table below:
+                        <br><br>
+                        <table class="table table-striped table-bordered" cellspacing="0" width="100%">
+                            <thead>
+                            <tr>
+                                <th></th>
+                                <th>Feature ID 1</th>
+                                <th>Feature ID 2</th>
+                                <th>Feature ID 3</th>
+                                <th>Feature ID 4</th>
+                                <th>...</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>Sample ID 1</td>
+                                <td>0.0032008</td>
+                                <td>0.0227951</td>
+                                <td>0.0167264</td>
+                                <td>0.0227934</td>
+                                <td>...</td>
+                            </tr>
+                            <tr>
+                                <td>Sample ID 2</td>
+                                <td>0.5020852</td>
+                                <td>0.0227953</td>
+                                <td>0.2117264</td>
+                                <td>0.1232279</td>
+                                <td>...</td>
+                            </tr>
+                            <tr>
+                                <td>Sample ID 3</td>
+                                <td>0.3811255</td>
+                                <td>0.4205265</td>
+                                <td>0.1020123</td>
+                                <td>0.1235234</td>
+                                <td>...</td>
+                            </tr>
+                            <tr>
+                                <td>...</td>
+                                <td>...</td>
+                                <td>...</td>
+                                <td>...</td>
+                                <td>...</td>
+                                <td>...</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        Only coma separeted (.csv) and tab-delimited (.txt) files are accepted for upload, and data
+                        files cannot exceed {{config['MAX_FILE_SIZE']}}. Furthermore, at the moment we cannot support
+                        data files with more than {{config['MAX_SAMPLES']}} samples, or more than
+                        {{config['MAX_FEATURES']}} features. Also, data files must have at least
+                        {{config['MINIMUM_FEATURES']}} features.<br><br>
+                        Finally, if you upload two data files, they must have at least {{config['INTERSECTING SAMPLES']}}
+                        intersecting samples. If you also upload a metadata file, than the three files together must
+                        satisfy this requirement.<br><br>
+                        All platform specific preprocessing should be done before uploading the data files, as they will be
+                        used in the CorrMapper pipeline as they are.
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading" role="tab" id="headingTwo">
+                    <h4 class="panel-title">
+                        <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            <b>Format of metadata file?</b>
+                        </a>
+                    </h4>
+                </div>
+                <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+                    <div class="panel-body">
+                        The metadata file has two purposes in CorrMapper. It is used in combination with the uploaded
+                        data files to produce a highly interactive dashboard, and its columns/variables could be the
+                        target variables for the feature selection process. It must be a coma separeted (.csv) or a
+                        tab-delimited (.txt) file.<br><br>
+                        Each column header and sample ID needs to be unique. Spaces will be removed from column names.
+                        At least {{config['INTERSECTING SAMPLES']}} of the sample IDs must match the sample IDs of the
+                        uploaded dataset(s). Currently a maximum of {{config['MAX_METADATA_COLUMNS']}} columns are
+                        supported, any additional columns will be ignored.<br><br>
+                        For the dashboard visualisation the user must specify what kind of data each column holds. This
+                        could be one of the following four: 'patient', 'date', 'categorical', 'continuous'. For the last
+                        two the following abbreviations are also accepted: 'cat', 'categ', 'ca' and 'con', 'cont', 'co'.
+                        For 'patient', 'sample' is also accepted, and for 'date', 'time' could also be used.
+                        Only one 'date' and one 'patient' columns are accepted. The name of the columns could be chosen
+                        freely, and they will be used as the title of graphs in the metadata explorer. See an example
+                        metadata file below.
+                        <br><br>
+
+                        <table class="table table-striped table-bordered" cellspacing="0" width="100%">
+                            <thead>
+                            <tr>
+                                <th></th>
+                                <th>Patient</th>
+                                <th>DateOfDiagnosis</th>
+                                <th>DeadOfDisease</th>
+                                <th>Gender</th>
+                                <th>AgeAtDiagnosis</th>
+                                <th>...</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td></td>
+                                <td>patient</td>
+                                <td>date</td>
+                                <td>categorical</td>
+                                <td>categorical</td>
+                                <td>continuous</td>
+                                <td>...</td>
+                            </tr>
+                            <tr>
+                                <td>Sample ID 1</td>
+                                <td>1</td>
+                                <td>21/09/2011</td>
+                                <td>yes</td>
+                                <td>Male</td>
+                                <td>62</td>
+                                <td>...</td>
+                            </tr>
+                            <tr>
+                                <td>Sample ID 2</td>
+                                <td>2</td>
+                                <td>04/03/2009</td>
+                                <td>no</td>
+                                <td>Female</td>
+                                <td>72</td>
+                                <td>...</td>
+                            </tr>
+                            <tr>
+                                <td>Sample ID 3</td>
+                                <td>3</td>
+                                <td>13/12/2011</td>
+                                <td>no</td>
+                                <td>Male</td>
+                                <td>42</td>
+                                <td>...</td>
+                            </tr>
+                            <tr>
+                                <td>...</td>
+                                <td>...</td>
+                                <td>...</td>
+                                <td>...</td>
+                                <td>...</td>
+                                <td>...</td>
+                                <td>...</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        Categorical variables will be represented as pie-charts, or as horizontal bar charts if they
+                        contain levels with too long names. Continuous variables will be displayed as histograms. The
+                        date variable will be automatically separated into year, month, and day of the week variables
+                        and each of these will be displayed as an individual chart. The 'patient' variable will be
+                        represented as pie-chart just like a categorical variable, but with broader colour map.<br><br>
+                        Dates can take any commonly used format but we recommend using the dd/mm/yyyy and mm/dd/yyyy
+                        formats.<br><br>
+                        The patient variable is useful if there are repeated measurements per patient/sample, but
+                        note that the resulting histograms and pie-charts in this scenario will not be meaningful
+                        unless filtered to one of the time-points of the repeated sampling.
+                        <br><br>
+                        Categorical variables must have at least {{config['MIN_SAMPLE_PER_CLASS']}} samples per each
+                        level, otherwise it will not show up in the analysis form as a target variable for feature
+                        selection. The feature selection algorithms can handle moderately imbalanced classes but this only
+                        works if each level has enough samples.
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading" role="tab" id="headingThree">
+                    <h4 class="panel-title">
+                        <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                            <b>Format of genomic annotation file?</b>
+                        </a>
+                    </h4>
+                </div>
+                <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+                    <div class="panel-body">
+                        If you have a genomic study (meaning your features are any kind of genomic element (GE)) you must
+                        provide an annotation file for each of your datasets. These annotation files must be a coma separeted
+                        (.csv) or a tab-delimited (.txt) file listing the genomic position of each GE. These files are needed
+                        because CorrMapper divides each species' genome into 300 equal-length bins to provide a high-level
+                        overview of the correlations between the different regions of the genome.<br><br>
+                        The first column must hold the unique IDs of your features in the data files. Any feature in the data file
+                        that does not have a row of annotation will be discarded from the data file and vice versa.<br><br>
+                        The second column must hold the name of the chromosome the given GE is located on. CorrMapper uses the
+                        chromosome names given by the UCSC genome browser for the given species.
+                        <br><br>
+                        The third and fourth columns must hold the start and end positions of the given GE respectively. They both
+                        must be integers and the start has to be smaller than the end. Also the end needs to be smaller than the
+                        length of the chromosome, while the start has to be larger than one. The name of the first four columns
+                        can be anything as long as the values of the columns respect the above format. See an example metadata
+                        file below.
+                        <br><br>
+
+                        <table class="table table-striped table-bordered" cellspacing="0" width="100%">
+                            <thead>
+                            <tr>
+                                <th>ProbeID</th>
+                                <th>Chromosome</th>
+                                <th>Start</th>
+                                <th>End</th>
+                                <th>Additional feature ID 1</th>
+                                <th>Additional feature ID 2</th>
+                                <th>...</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>GE probe 1</td>
+                                <td>1</td>
+                                <td>10471224</td>
+                                <td>10638510</td>
+                                <td>xyz</td>
+                                <td>xyz</td>
+                                <td>...</td>
+                            </tr>
+                            <tr>
+                                <td>GE probe 2</td>
+                                <td>13</td>
+                                <td>54327729</td>
+                                <td>54519952</td>
+                                <td>xyz</td>
+                                <td>xyz</td>
+                                <td>...</td>
+                            </tr>
+                            <tr>
+                                <td>GE probe 3</td>
+                                <td>X</td>
+                                <td>64454707</td>
+                                <td>64613450</td>
+                                <td>xyz</td>
+                                <td>xyz</td>
+                                <td>...</td>
+                            </tr>
+                            <tr>
+                                <td>...</td>
+                                <td>...</td>
+                                <td>...</td>
+                                <td>...</td>
+                                <td>...</td>
+                                <td>...</td>
+                                <td>...</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        Any number of additional information regarding the GEs could be used in subsequent columns of the table.
+                        They will be displayed in the genomic correlation network explorer. These additional columns will also be
+                        sortable and searchable which can greatly facilitate the interpretation of the resulting correlation
+                        networks.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-header">
+            <h2>Flowchart of CorrMapper</h2>
+        </div>
+        <img src="{{ url_for('static', filename='img/overview.svg') }}" alt="CorrMapper's flowchart" style="width: 100%; height: auto;"/>
+
+        <div class="page-header">
+            <h2>CorrMapper's data integration pipeline</h2>
+        </div>
+        <img src="{{ url_for('static', filename='img/pipeline.svg') }}" alt="CorrMapper's pipeline" style="width: 100%; height: auto;"/>
+
+    </div>
+
+</div>
+
+
+{% endblock %}

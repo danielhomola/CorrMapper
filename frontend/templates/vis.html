@@ -1,0 +1,574 @@
+{% extends 'base.html' %}
+{% set active_page = "" %}
+
+{% set bootstro = {
+   "1": ("If you have uploaded two datasets then you can explore three correlation network:
+            <br><br>
+            <b>Dataset 1 with dataset2:</b> will show the network of Spearman
+            correlations between the features of the two datasets. The topology of
+            graph is determined using the Graph LASSO algorithm.
+            <br><b>Dataset 1:</b> will similarly show the network of correlations between the first
+            dataset's features.
+            <br><b>Dataset 2:</b> same as above for dataset 2.
+            <br><br>
+            You can load these into a new browser window by clicking on any of the
+            datasets of the dropdown menu.
+            <br><br>
+            <b>Genomic explorer:</b> if your dataset has genomic features and you uploaded
+            annotation files about them, then you can launch the genomic explorer from here
+            as well.</b>"),
+   "2": ("Both the rows and columns of the heatmap below could be
+           ordered using this dropdown menus:
+           <br><br>
+           <b>Modules:</b> This is the default ordering. The modules could be explored
+           with the Modules drop down to the right.
+           <br><b>Custers of dataset:</b> will order the heatmap according to the
+           hierarchical clusters of the given dataset's values.
+           <br><b>Clusters of correlations:</b> will similarly order the heatmap
+           according to the hierarchical clusters of rho values within the heatmap.
+           <br><b>Feature names of dataset:</b> will simply order the features by their name.
+           <br><br>
+           These four options could be applied to columns and rows independenty, however
+            the some ordering applied to both is probably the most useful."),
+   "3": ("CorrMapper uses modularity finding algoirthms to identify nodes that
+          are more connected to each other than to the rest of the nodes in the network.
+          <br><br>
+           These modules could be explored by clicking any of the elements of this
+           dropdown menu."),
+   "4": ("Legend for the network visualisations."),
+   "5": ("Any selection or focus event could be cancelled using this reset button.
+         This will bring back the networks and heatmap to their initial state. As a
+         shortcut you can use the <b>Esc key</b> as well."),
+   "6": ("<b>Search:</b> When looking for a particular feature just start typing
+         any part of its name and the heatmap's column and row names will highlight
+         the features that match the query.
+         <br><br>
+         <b>Scatter toggle:</b> Hovering over any of the heatmap's cells will display the
+         raw data that went into the particular correlation. This could be switched off here.
+         <br><br>
+         <b>Copy to clipboard:</b> If a selection is made on the heatmap, the features
+         involved in the selected correlations could be copied to your clipboard to make
+         Googling and further research easier. "),
+   "7": ("<b>Cells and colorbar:</b>
+           Rolling your mouse over any of the cells will show the exact rho and p values,
+           while on the left, a tick on the colour-bar will display how extreme the given rho
+           value is with respect to all other cells. Reds show positive correlations, while
+           blues are used for negative ones.
+           <br>
+           Furthermore, hovering over any of the cells will display a scatter-plot that
+           shows the raw data that went into the correlation. This could be switched off
+           with the scatter toggle switch above.
+           <br><b>Row and column names:</b> Clicking on any of these will reorder the heatmap
+           by the given row's/column's rho values. It will also set the focus of the networks
+           to the clicked feature.<br>
+           Rolling the mouse over any row or column label will leaving it there for half a
+           second will also focus the networks to that particular feature.
+           <br><b>Selection:</b> By clicking on any cell and dragging our mouse we can select
+           any region of the heatmap. Once we release the left mouse button, the networks get
+           filtered to only show the selected region of the heatmap. This allows us to explore
+           sub-networks of interest easily. Hovering over a row or column label of the selected
+           region still focuses the networks to a particular feature. Hovering over a row or
+           column label that is not in the selected region however will not lead to anything
+           useful.
+           <br><b>Multi-selection:</b> Once we have a rectangular selection we can add to it
+           another region by pressing down and holding our <b>Shift key</b> while we draw a new selection.
+           As before the networks get filtered to only show the selected correlations.
+           <br><b>Reset selection:</b> Any selection could be cancelled by clicking on any of the
+           heatmap's cells or pressing the <b>Esc key</b>. Alternatively the 'Reset selection' button
+           could also be used.
+          "),
+   "8": ("<br><b>Nodes:</b> If the visualised network is showing the correlations between
+            two datasets, it will be rendered as a bipartite graph. Consequently two
+            different colours are used to separate the features of the two datasets.
+            <br><b>Edges</b> have the same colour as their corresponding cell in the heatmap.
+            The width of each edge is also determined by the strength of the correlation.
+            <br><b>Zooming:</b> The network is zoomable using the mouse-wheel over it. Once
+            we zoom in, we can drag the network to move around. The <b>Esc key</b> will
+            reset the zoom.
+            <br><b>Focusing:</b> Any node could be clicked. This will focus the networks to
+            that particular feature and also highlight it's corresponding row or column label
+            in the heatmap. Clicking any node twice will reset the focus and give back the full
+            network.
+            <br><b>Fold change:</b>If the feature selection was carried out on a
+            categorical binary variable, the median fold change will be displayed in the
+            tooltip for each feature next below their name. This is calculated as
+            the log ratio of the feature's medians in the two cohort corresponding to the two
+            levels of the binary variable. The level which is alphabetically or numerically
+            ranked ahead is used as the numerator, while the other level of the binary variable
+            is the denominator.
+            <br>In the same tooltip the exact rho values connecting the node to its neighbours
+            are also displayed."),
+   "9": ("This unusal looking network is an egoistic representation of the other network.
+           Once we focus on a single feature this will display it at its center with its
+           closest and second closest neighbours.
+           <br><br>
+           Just with the other network, any node could be clicked to focus on that particular
+           feature. The networks are synchronised to always focus on the same feature. If we
+           click on this network however, a legend will appear on the right, which we can use
+           to explore only this graph."),
+} -%}
+
+
+{% block layout %}
+
+<link href="{{ url_for('static', filename='css/bootstro.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/vis.css') }}" rel="stylesheet">
+
+<!-- ===================================================================== -->
+<!--  H E A D E R  -->
+<div class="row">
+    <div class="col-xs-12 bootstro title"
+        data-bootstro-title=" Tour of correlation network explorer"
+        data-bootstro-content="Looks like this is your first time using the correlation network explorer of
+                              {{ config['APP_NAME'] }}.
+                              Please take a minute to go through this tour and learn about the interface so you
+                              get the maximum out of your data. <br><br>
+                              You can navigate this tour with the buttons below, or with the
+                              &rarr; &darr;, &larr; &uarr; keys
+                              <br><br>
+                              You can skip this tour now, and come back to it later, clicking the question mark
+                              in the top-right corner."
+        data-bootstro-step = "0"
+        data-bootstro-placement="bottom"
+        >
+        <h3 style="padding-left: 15px;">
+            <b>{{analysis_name}} </b> <span style="color: #bebebe">|</span>
+            {% if not autocorr %}
+                {% if data_file == "dataset1_2" %}
+                    {{ dataset_names[0] }} <span style="color: #9f9f9f">&</span> {{ dataset_names[1] }}
+                {% elif data_file == "dataset1" %}
+                    {{ dataset_names[0] }}
+                {% elif data_file == "dataset2" %}
+                    {{ dataset_names[1] }}
+                {% endif %}
+            {% else %}
+                {{ dataset_names[0] }}
+            {% endif %}
+            <a id="help" href="#" ><span class="fa fa-question" aria-hidden="true" style="float: right; padding-top: 0px; padding-right: 10px; font-size: 1em;"></span></a>
+        </h3>
+    </div>
+</div>
+
+<!-- ===================================================================== -->
+
+<!--  TWO COLUMN LAYOUT  -->
+
+<!-- ===================================================================== -->
+
+{% if two_column %}
+<div class="row">
+    <!-- ===================================================================== -->
+    <!--  LEFT COLUMN  -->
+    <div class="col-xs-12 col-sm-6" >
+        <!-- ===================================================================== -->
+        <!--  CONTROLS  -->
+        <div class="col-xs-12">
+
+            <!--  NAVSTART -->
+            <nav id="vis_nav" class="navbar navbar-default" style="margin-top: 20px; margin-bottom: 20px">
+                <ul class="nav navbar-nav">
+
+                <!--  LOAD -->
+                {% if not autocorr or annotation %}
+                <li class="dropdown bootstro" data-bootstro-title="Dataset selector"
+                            data-bootstro-content="{{bootstro['1']|safe}}"
+                            data-bootstro-step = "1"
+                            data-bootstro-placement="bottom">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Load<span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        {% if not autocorr %}
+                            {% if data_file == "dataset1_2" %}
+                                <li><a href="{{ url_for('vis', user_id=user_id, analysis_id=analysis_id, data_file='dataset1') }}" target="_blank">{{ dataset_names[0] }}</a></li>
+                                <li><a href="{{ url_for('vis', user_id=user_id, analysis_id=analysis_id, data_file='dataset2') }}" target="_blank">{{ dataset_names[1] }}</a></li>
+                            {% elif data_file == "dataset1" %}
+                                <li><a href="{{ url_for('vis', user_id=user_id, analysis_id=analysis_id, data_file='dataset1_2') }}" target="_blank">{{ dataset_names[0] }} with {{ dataset_names[1] }}</a></li>
+                                <li><a href="{{ url_for('vis', user_id=user_id, analysis_id=analysis_id, data_file='dataset2') }}" target="_blank">{{ dataset_names[1] }}</a></li>
+                            {% elif data_file == "dataset2" %}
+                                <li><a href="{{ url_for('vis', user_id=user_id, analysis_id=analysis_id, data_file='dataset1_2') }}" target="_blank">{{ dataset_names[0] }} with {{ dataset_names[1] }}</a></li>
+                                <li><a href="{{ url_for('vis', user_id=user_id, analysis_id=analysis_id, data_file='dataset1') }}" target="_blank">{{ dataset_names[0] }}</a></li>
+                            {% endif%}
+                        {% endif%}
+
+                        <!--  GENOMIC EXPLORER -->
+                        {% if annotation %}
+                            {% if not autocorr %}
+                                <li role="separator" class="divider"></li>
+                            {% endif %}
+                            <li><a href="{{ url_for('vis_genomic', user_id=user_id, analysis_id=analysis_id, data_file=data_file) }}" target="_blank">
+                                <span style="color: #1D70AB">Genomic explorer</span></a></li>
+                        {% endif %}
+                    </ul>
+                </li>
+                {% endif %}
+
+                <!--  REORDER -->
+                <li class="dropdown bootstro" data-bootstro-title="Reordering heatmap"
+                            data-bootstro-content="{{bootstro['2']|safe}}"
+                            data-bootstro-step = "2"
+                            data-bootstro-placement="bottom">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Reorder<span class="caret"></span></a>
+                    <ul class="dropdown-menu" id="reorder-dropdown">
+                        <!-- ROWS -->
+                        <li><a href="#"><b>Rows by</b></a></li>
+                        <li data-value="defaultRow" class="active roworder"><a href="#">- modules of
+                            {% if data_file == "dataset1_2" %}{{ dataset_names[0] }}{% elif data_file == "dataset1" %}
+                            {{ dataset_names[0] }}{% elif data_file == "dataset2" %}{{ dataset_names[1] }}{% endif %}
+                        </a></li>
+                        <li data-value="dataRow" class="roworder"><a href="#">- clusters of
+                            {% if data_file == "dataset1_2" %}{{ dataset_names[0] }}{% elif data_file == "dataset1" %}
+                            {{ dataset_names[0] }}{% elif data_file == "dataset2" %}{{ dataset_names[1] }}{% endif %}
+                        </a></li>
+                        <li data-value="rRow" class="roworder"><a href="#">- clusters of correlations</a></li>
+                        <li data-value="nameRow" class="roworder"><a href="#">- feature names of
+                            {% if data_file == "dataset1_2" %}{{ dataset_names[0] }}{% elif data_file == "dataset1" %}
+                            {{ dataset_names[0] }}{% elif data_file == "dataset2" %}{{ dataset_names[1] }}{% endif %}
+                        </a></li>
+
+                        <!-- COLS -->
+                        <li><a href="#"><b>Columns by</b></a></li>
+                        <li data-value="defaultCol" class="active colorder"><a href="#">- modules of
+                            {% if data_file == "dataset1_2" %}{{ dataset_names[1] }}{% elif data_file == "dataset1" %}
+                            {{ dataset_names[0] }}{% elif data_file == "dataset2" %}{{ dataset_names[1] }}{% endif %}
+                        </a></li>
+                        <li data-value="dataCol" class="colorder"><a href="#">- clusters of
+                            {% if data_file == "dataset1_2" %}{{ dataset_names[1] }}{% elif data_file == "dataset1" %}
+                            {{ dataset_names[0] }}{% elif data_file == "dataset2" %}{{ dataset_names[1] }}{% endif %}
+                        </a></li>
+                        <li data-value="rCol" class="colorder"><a href="#">- clusters of correlations</a></li>
+                        <li data-value="nameCol" class="colorder"><a href="#">- feature names of
+                            {% if data_file == "dataset1_2" %}{{ dataset_names[1] }}{% elif data_file == "dataset1" %}
+                            {{ dataset_names[0] }}{% elif data_file == "dataset2" %}{{ dataset_names[1] }}{% endif %}
+                        </a></li>
+                    </ul>
+                </li>
+
+                <!--  MODULES -->
+                <li  id="modules-dropdown-main" class="dropdown bootstro" data-bootstro-title="Exploring modules"
+                            data-bootstro-content="{{bootstro['3']|safe}}"
+                            data-bootstro-step = "3"
+                            data-bootstro-placement="bottom">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Modules<span class="caret"></span></a>
+                    <ul class="dropdown-menu" id="modules-dropdown">
+                        {% if modules_n > 0 %}
+                            {% for m in range(modules_n) %}
+                            <li data-value="{{ m }}"><a href="#">Module {{ m+1 }}</a></li>
+                            {% endfor %}
+                        {% else %}
+                            <li data-value="0"><a href="#">No module found</a></li>
+                        {% endif %}
+                    </ul>
+                </li>
+
+                <!--  LEGEND -->
+                <li class="dropdown bootstro" data-bootstro-title="Legend"
+                            data-bootstro-content="{{bootstro['4']|safe}}"
+                            data-bootstro-step = "4"
+                            data-bootstro-placement="bottom">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Legend<span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#">Nodes</a></li>
+                        {% if data_file == "dataset1_2" %}
+                            <li><a href="#"><i class="fa fa-circle legend-circle" aria-hidden="true" style="color:#fff"></i>{{ dataset_names[0] }}</a></li>
+                            <li><a href="#"><i class="fa fa-circle" aria-hidden="true" style="color:#333"></i>{{ dataset_names[1] }}</a></li>
+                        {% elif data_file == "dataset1" %}
+                            <li><a href="#"><i class="fa fa-circle legend-circle" aria-hidden="true" style="color:#fff"></i>{{ dataset_names[0] }}</a></li>
+                        {% elif data_file == "dataset2" %}
+                            <li><a href="#"><i class="fa fa-circle legend-circle" aria-hidden="true" style="color:#fff"></i>{{ dataset_names[1] }}</a></li>
+                        {% endif %}
+                        <li role="separator" class="divider"></li>
+                        <li><a href="#">Edges</a></li>
+                        <li><a href="#"><i class="fa fa-circle legend-circle" aria-hidden="true" style="color:#CE1212"></i>positive correlation</a></li>
+                        <li><a href="#"><i class="fa fa-circle" aria-hidden="true" style="color:#0971B2"></i>negative correlation</a></li>
+                    </ul>
+                </li>
+
+                <!--  RESET -->
+                <li class="bootstro" data-bootstro-title="Reset selections, zooming"
+                            data-bootstro-content="{{bootstro['5']|safe}}"
+                            data-bootstro-step = "5"
+                            data-bootstro-placement="bottom">
+                    <a href="#" id="reset_network">Reset</a></li>
+
+                <!--  SEARCH AND HIDE SCATTER-->
+                <form class="navbar-form navbar-left bootstro" data-bootstro-title="Miscellaneous features"
+                            data-bootstro-content="{{bootstro['6']|safe}}"
+                            data-bootstro-step = "6"
+                            data-bootstro-placement="bottom">
+                    <div class="form-group">
+                    <input id="searchbar" type="text" class="form-control" placeholder="Search" style="margin-right: 20px;">
+                    <input type="checkbox" data-toggle="toggle" data-on="Show scatters" data-off="Hide scatters" id="scatter-toggle">
+                    </div>
+                </form>
+
+                <!--  COPY TO CLIPBOARD  -->
+                <li id="to_clipboard" data-clipboard-text="test"><a href="#">Copy to clipboard</a></li>
+
+                </ul>
+            </nav>
+        </div>
+
+        <!-- ===================================================================== -->
+
+        <!--  HEATMAP -->
+        <div id = "heatmap" class="col-xs-12 bootstro" style="margin-left: -35px;"
+            data-bootstro-title="Heatmap"
+            data-bootstro-content="{{bootstro['7']|safe}}"
+            data-bootstro-step = "7"
+            data-bootstro-placement="right"
+            >
+        </div>
+
+        <!--  RINGS -->
+        <div id="rings" class="col-xs-12 bootstro" style="border-top:1px solid #dcdcdc;"
+            data-bootstro-title="Rings network"
+            data-bootstro-content="{{bootstro['9']|safe}}"
+            data-bootstro-step = "9"
+            data-bootstro-placement="top"
+            >
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!--  RIGHT CO -->
+    <!-- ===================================================================== -->
+
+    <!--  NETWORKS -->
+    <div class="col-xs-12 col-sm-6" style="border-left:1px solid #dcdcdc; vertical-align:top;">
+        <div id="network" class="col-xs-12 bootstro" style="padding-top: 100px"
+            data-bootstro-title="(Bipartite) network"
+            data-bootstro-content="{{bootstro['8']|safe}}"
+            data-bootstro-step = "8"
+            data-bootstro-placement="left"
+            >
+        </div>
+    </div>
+</div>
+
+<!-- ===================================================================== -->
+
+<!--  ONE COLUMN LAYOUT  -->
+
+<!-- ===================================================================== -->
+
+{% else %}
+<div class="row">
+    <div class="col-xs-12" >
+        <!-- ===================================================================== -->
+        <!--  CONTROLS  -->
+        <div>
+
+            <!--  NAVSTART -->
+            <nav id="vis_nav" class="navbar navbar-default" style="margin-top: 20px; margin-bottom: 20px">
+                <ul class="nav navbar-nav">
+
+                <!--  LOAD -->
+                {% if not autocorr or annotation %}
+                <li class="dropdown bootstro" data-bootstro-title="Dataset selector"
+                            data-bootstro-content="{{bootstro['1']|safe}}"
+                            data-bootstro-step = "1"
+                            data-bootstro-placement="bottom">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Load<span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        {% if not autocorr %}
+                            {% if data_file == "dataset1_2" %}
+                                <li><a href="{{ url_for('vis', user_id=user_id, analysis_id=analysis_id, data_file='dataset1') }}" target="_blank">{{ dataset_names[0] }}</a></li>
+                                <li><a href="{{ url_for('vis', user_id=user_id, analysis_id=analysis_id, data_file='dataset2') }}" target="_blank">{{ dataset_names[1] }}</a></li>
+                            {% elif data_file == "dataset1" %}
+                                <li><a href="{{ url_for('vis', user_id=user_id, analysis_id=analysis_id, data_file='dataset1_2') }}" target="_blank">{{ dataset_names[0] }} with {{ dataset_names[1] }}</a></li>
+                                <li><a href="{{ url_for('vis', user_id=user_id, analysis_id=analysis_id, data_file='dataset2') }}" target="_blank">{{ dataset_names[1] }}</a></li>
+                            {% elif data_file == "dataset2" %}
+                                <li><a href="{{ url_for('vis', user_id=user_id, analysis_id=analysis_id, data_file='dataset1_2') }}" target="_blank">{{ dataset_names[0] }} with {{ dataset_names[1] }}</a></li>
+                                <li><a href="{{ url_for('vis', user_id=user_id, analysis_id=analysis_id, data_file='dataset1') }}" target="_blank">{{ dataset_names[0] }}</a></li>
+                            {% endif%}
+                        {% endif%}
+
+                        <!--  GENOMIC EXPLORER -->
+                        {% if annotation %}
+                            {% if not autocorr %}
+                                <li role="separator" class="divider"></li>
+                            {% endif %}
+                            <li><a href="{{ url_for('vis_genomic', user_id=user_id, analysis_id=analysis_id, data_file=data_file) }}" target="_blank">
+                                <span style="color: #1D70AB">Genomic explorer</span></a></li>
+                        {% endif %}
+                    </ul>
+                </li>
+                {% endif %}
+
+                <!--  REORDER -->
+                <li class="dropdown bootstro" data-bootstro-title="Reordering heatmap"
+                            data-bootstro-content="{{bootstro['2']|safe}}"
+                            data-bootstro-step = "2"
+                            data-bootstro-placement="bottom">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Reorder<span class="caret"></span></a>
+                    <ul class="dropdown-menu" id="reorder-dropdown">
+                        <!-- ROWS -->
+                        <li><a href="#"><b>Rows by</b></a></li>
+                        <li data-value="defaultRow" class="active roworder"><a href="#">- modules of
+                            {% if data_file == "dataset1_2" %}{{ dataset_names[0] }}{% elif data_file == "dataset1" %}
+                            {{ dataset_names[0] }}{% elif data_file == "dataset2" %}{{ dataset_names[1] }}{% endif %}
+                        </a></li>
+                        <li data-value="dataRow" class="roworder"><a href="#">- clusters of
+                            {% if data_file == "dataset1_2" %}{{ dataset_names[0] }}{% elif data_file == "dataset1" %}
+                            {{ dataset_names[0] }}{% elif data_file == "dataset2" %}{{ dataset_names[1] }}{% endif %}
+                        </a></li>
+                        <li data-value="rRow" class="roworder"><a href="#">- clusters of correlations</a></li>
+                        <li data-value="nameRow" class="roworder"><a href="#">- feature names of
+                            {% if data_file == "dataset1_2" %}{{ dataset_names[0] }}{% elif data_file == "dataset1" %}
+                            {{ dataset_names[0] }}{% elif data_file == "dataset2" %}{{ dataset_names[1] }}{% endif %}
+                        </a></li>
+
+                        <!-- COLS -->
+                        <li><a href="#"><b>Columns by</b></a></li>
+                        <li data-value="defaultCol" class="active colorder"><a href="#">- modules of
+                            {% if data_file == "dataset1_2" %}{{ dataset_names[1] }}{% elif data_file == "dataset1" %}
+                            {{ dataset_names[0] }}{% elif data_file == "dataset2" %}{{ dataset_names[1] }}{% endif %}
+                        </a></li>
+                        <li data-value="dataCol" class="colorder"><a href="#">- clusters of
+                            {% if data_file == "dataset1_2" %}{{ dataset_names[1] }}{% elif data_file == "dataset1" %}
+                            {{ dataset_names[0] }}{% elif data_file == "dataset2" %}{{ dataset_names[1] }}{% endif %}
+                        </a></li>
+                        <li data-value="rCol" class="colorder"><a href="#">- clusters of correlations</a></li>
+                        <li data-value="nameCol" class="colorder"><a href="#">- feature names of
+                            {% if data_file == "dataset1_2" %}{{ dataset_names[1] }}{% elif data_file == "dataset1" %}
+                            {{ dataset_names[0] }}{% elif data_file == "dataset2" %}{{ dataset_names[1] }}{% endif %}
+                        </a></li>
+                    </ul>
+                </li>
+
+                <!--  MODULES -->
+                <li  id="modules-dropdown-main" class="dropdown bootstro" data-bootstro-title="Exploring modules"
+                            data-bootstro-content="{{bootstro['3']|safe}}"
+                            data-bootstro-step = "3"
+                            data-bootstro-placement="bottom">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Modules<span class="caret"></span></a>
+                    <ul class="dropdown-menu" id="modules-dropdown">
+                        {% if modules_n > 0 %}
+                            {% for m in range(modules_n) %}
+                            <li data-value="{{ m }}"><a href="#">Module {{ m+1 }}</a></li>
+                            {% endfor %}
+                        {% else %}
+                            <li data-value="0"><a href="#">No module found</a></li>
+                        {% endif %}
+                    </ul>
+                </li>
+
+                <!--  LEGEND -->
+                <li class="dropdown bootstro" data-bootstro-title="Legend"
+                            data-bootstro-content="{{bootstro['4']|safe}}"
+                            data-bootstro-step = "4"
+                            data-bootstro-placement="bottom">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Legend<span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#">Nodes</a></li>
+                        {% if data_file == "dataset1_2" %}
+                            <li><a href="#"><i class="fa fa-circle legend-circle" aria-hidden="true" style="color:#fff"></i>{{ dataset_names[0] }}</a></li>
+                            <li><a href="#"><i class="fa fa-circle" aria-hidden="true" style="color:#333"></i>{{ dataset_names[1] }}</a></li>
+                        {% elif data_file == "dataset1" %}
+                            <li><a href="#"><i class="fa fa-circle legend-circle" aria-hidden="true" style="color:#fff"></i>{{ dataset_names[0] }}</a></li>
+                        {% elif data_file == "dataset2" %}
+                            <li><a href="#"><i class="fa fa-circle legend-circle" aria-hidden="true" style="color:#fff"></i>{{ dataset_names[1] }}</a></li>
+                        {% endif %}
+                        <li role="separator" class="divider"></li>
+                        <li><a href="#">Edges</a></li>
+                        <li><a href="#"><i class="fa fa-circle legend-circle" aria-hidden="true" style="color:#CE1212"></i>positive correlation</a></li>
+                        <li><a href="#"><i class="fa fa-circle" aria-hidden="true" style="color:#0971B2"></i>negative correlation</a></li>
+                    </ul>
+                </li>
+
+                <!--  RESET -->
+                <li class="bootstro" data-bootstro-title="Reset selections, zooming"
+                            data-bootstro-content="{{bootstro['5']|safe}}"
+                            data-bootstro-step = "5"
+                            data-bootstro-placement="bottom">
+                    <a href="#" id="reset_network">Reset</a></li>
+
+                <!--  SEARCH AND HIDE SCATTER-->
+                <form class="navbar-form navbar-left bootstro" data-bootstro-title="Miscellaneous features"
+                            data-bootstro-content="{{bootstro['6']|safe}}"
+                            data-bootstro-step = "6"
+                            data-bootstro-placement="bottom">
+                    <div class="form-group">
+                    <input id="searchbar" type="text" class="form-control" placeholder="Search" style="margin-right: 20px;">
+                    <input type="checkbox" data-toggle="toggle" data-on="Show scatters" data-off="Hide scatters" id="scatter-toggle">
+                    </div>
+                </form>
+
+                <!--  COPY TO CLIPBOARD  -->
+                <li id="to_clipboard" data-clipboard-text="test"><a href="#">Copy to clipboard</a></li>
+
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- ===================================================================== -->
+<!--  HEATMAP -->
+<div class="row">
+    <div id = "heatmap" class="col-xs-12 bootstro" style="border-bottom:1px solid #dcdcdc;"
+        data-bootstro-title="Heatmap"
+        data-bootstro-content="{{bootstro['7']|safe}}"
+        data-bootstro-step = "7"
+        data-bootstro-placement="bottom"
+        >
+    </div>
+</div>
+<div class="row">
+
+    <!-- ===================================================================== -->
+    <!--  NETWORKS -->
+    <div id="network" class="col-xs-12 col-md-6 bootstro"
+        data-bootstro-title="(Bipartite) network"
+        data-bootstro-content="{{bootstro['8']|safe}}"
+        data-bootstro-step = "8"
+        data-bootstro-placement="top"
+        >
+    </div>
+    <div id="rings" class="col-xs-12 col-md-6 bootstro" style="border-left:1px solid #dcdcdc;"
+        data-bootstro-title="Rings network"
+        data-bootstro-content="{{bootstro['9']|safe}}"
+        data-bootstro-step = "9"
+        data-bootstro-placement="top"
+        >
+    </div>
+</div>
+
+{% endif %}
+
+<!-- ===================================================================== -->
+<!--  TOOLTIPS -->
+<div class="row">
+    <div id="tooltip" class="col-lg-12 hidden">
+        <p><span id="value"/></p>
+    </div>
+</div>
+
+<link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
+<script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3plus/1.9.5/d3plus.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.6.0/clipboard.min.js"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/bootstro.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/colorbar.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('get_file', user_id=user_id, study_id=analysis_id, analysis=1, file=analysis_folder+'/vis/'+data_file+'_vars.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('get_file', user_id=user_id, study_id=analysis_id, analysis=1, file=analysis_folder+'/vis/'+data_file+'_network.js') }}"></script>
+
+<script type="text/javascript">
+    var data_loc = "{{ url_for('get_file', user_id=user_id, study_id=analysis_id, analysis=1, file=analysis_folder+'/vis/'+data_file+'.csv') }}";
+    var img_folder = "{{ url_for('get_file', user_id=user_id, study_id=analysis_id, analysis=1, file=analysis_folder+'/img/') }}";
+    var vis_intro = {{ vis_intro|int }};
+    var data_file = "{{ data_file }}";
+    var two_column = {{ two_column|int }};
+
+    function help(){
+        bootstro.start('.bootstro', {
+            onComplete: function (params) {
+                alert("You have reached the end of the tour. Press 'Ok I got it' button or the <b>Esc key</b> to exit.");
+            }
+        })
+    };
+    $('#help').click(help);
+</script>
+
+<script src="{{ url_for('static', filename='js/vis.js') }}"></script>
+{% endblock %}

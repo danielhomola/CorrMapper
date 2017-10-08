@@ -1,0 +1,4 @@
+FS Method, Matrix, Prec, Recall
+l1svc,P,nan,0.0
+boruta,P,nan,0.0
+jmi,P,0.0,0.0

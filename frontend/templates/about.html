@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% set active_page = "about" %}
+{% block body_class %}main main-index{% endblock %}
+
+{% block layout %}
+    <div class="row">
+        <div class="col-xs-8 col-xs-offset-2" style="text-align: justify;">
+            <div class="page-header">
+                <h2>About</h2>
+            </div>
+            CorrMapper is an online research tool for the integration and visualisation of complex biomedical
+            and omics datasets.
+            <br><br>
+            It allows users to:
+            <ul>
+                <li>
+                    map clinical metadata onto the omics datasets using an automatically generated dashboard interface,
+                </li>
+                <li>
+                    perform feature selection on the omics datasets using one of the clinical metadata variables,
+                </li>
+                <li>
+                    infer robust correlations between the selected features of one or two omics datasets,
+                </li>
+                <li>
+                    visualise and analyse the networks of these correlations using highly interactive modules.
+                </li>
+            </ul>
+
+            CorrMapper is a data exploration and hypothesis generation tool.
+            It does not try to automate statistical inference, or provide predicitve models.
+            It is simply making the simultaneous exploration of omics datasets and clinical metadata easier by reducing the number
+            of predictors to the clinically relevant ones, and by providing novel and interactive visualisation modules.
+
+            <br><br>
+            Very importantly, if you would like to use the features that were selected by CorrMapper for modelling,
+            you must ensure that the model is built and validated on new data, that was not included in the feature selection.
+            Otherwise the generalisation error of your model will be underestimated. See Chapter 7.10.2 <i>The Wrong and
+            Right Way to Do Cross-validation</i> in <a href="http://statweb.stanford.edu/~tibs/ElemStatLearn/printings/ESLII_print10.pdf">
+            The Elements of Statistical Learning</a> on page 245.
+            <br><br>
+
+            <div class="page-header">
+                <h2>Credits</h2>
+            </div>
+            The demos and the intro video use the following breast cancer study from Chin et al to demonstrate the various components of the app:<br>
+            Chin, Koei, et al. "Genomic and transcriptional aberrations linked to breast cancer pathophysiologies." Cancer cell 10.6 (2006): 529-541.
+            <br><br>
+            CorrMapper was developed by <a href="http://danielhomola.com">Daniel Homola</a> during his PhD at Imperial College London, with the generous support
+            of the <a href="https://www.imperial.ac.uk/stratigrad/">STRATiGRAD</a> programme and the
+            <a href="https://wellcome.ac.uk">Wellcome Trust</a>.
+            <br><br>
+            <img src="{{ url_for('static', filename='img/funders.png') }}" alt="Funders" style="width: 700px; height: auto; margin-top: 30px;  opacity: 0.8;" class="center-block"/>
+        </div>
+    </div>
+
+{% endblock %}

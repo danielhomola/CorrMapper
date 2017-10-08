@@ -1,0 +1,390 @@
+{% extends 'base.html' %}
+{% set active_page = "" %}
+
+{% block layout %}
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/dc.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link href="{{ url_for('static', filename='css/bootstro.css') }}" rel="stylesheet">
+
+<!-- ===================================================================== -->
+<!--  H E A D E R  -->
+<div class="row">
+    <div class="col-xs-12 bootstro title"
+        data-bootstro-title=" Tour of metadata explorer"
+        data-bootstro-content="Looks like this is your first time using the metadata explorer of {{ config['APP_NAME'] }}.
+                              Please take a minute to go through this tour and learn about the interface so you
+                              get the maximum out of your data. <br><br>
+                              You can navigate this tour with the buttons below, or with the
+                              &rarr; &darr;, &larr; &uarr; keys
+                              <br><br>
+                              You can skip this tour now, and come back to it later, clicking the question mark
+                              in the top-right corner."
+        data-bootstro-step = "0"
+        data-bootstro-placement="bottom">
+        <h3>
+            <b>Metadata explorer for {{ study_name }}</b>
+            <a id="help" href="#" ><span class="fa fa-question" aria-hidden="true" style="float: right; padding-top: 0px; padding-right: 10px; font-size: 1em;"></span></a>
+        </h3>
+    </div>
+</div>
+
+<!-- ===================================================================== -->
+<!--  C H A R T S  -->
+<div class="row">
+    <!-- =================================================================== -->
+    <!--  L E F T   C O L U M N  -->
+    <div class="{% if dash_vars.autocorr %}col-xs-12 col-sm-6 col-sm-7 col-md-8{% else %}col-xs-12 col-sm-7 col-md-8 col-lg-6{% endif %}">
+
+        <!-- =============================================================== -->
+        <!--  C O U N T E R -->
+
+        <div class="col-xs-12 dc-data-count dc-chart bootstro" id="data-count"
+            data-bootstro-title="Data count"
+            data-bootstro-content="Here you'll see the total number of active samples/patients.
+                                   If no filters were applied to your dataset using the charts below
+                                   this will equal the total number of samples/patients in your study.
+                                   If you applied (multiple) filter(s) it will show the size of currently
+                                   active subset/cohort.
+                                   <br><br>
+                                   The Reset All button will clear all filters on all charts and take you
+                                   back to your full dataset."
+            data-bootstro-step = "{% if dash_vars.date %}5{% else %}3{% endif %}"
+            data-bootstro-placement="bottom"
+            >
+            <small>
+                <span class="filter-count"></span> selected out of <span class="total-count"></span> records |
+                <a id="all" href="#">Reset All</a>
+                </span>
+            </small>
+        </div>
+        <div class="col-lg-12">
+
+        <!-- =============================================================== -->
+        <!--  D A T E   C H A R T S -->
+
+        {% if dash_vars.date %}
+            <div class="row bootstro"  style="padding-left: 0px;"
+                data-bootstro-title="Pie-charts of dates"
+                data-bootstro-content="Since you supplied a date column in your metadata, {{ config['APP_NAME'] }}
+                                      separated it into years, months and days. You can select any slice
+                                      of the pie-charts. This will apply a filter to the whole dataset, updating
+                                      all other charts, and showing only the part of the dataset that falls into
+                                      the slice you clicked. Go ahead and try it now!
+                                      <br><br>
+                                      Multiple slices of the same pie-chart could be selected simultaneously.
+                                      <br><br>
+                                      You can also apply multiple filters simultaneously by selecting more than
+                                      one pie-charts.
+                                      <br><br>
+                                      The selections could be reverted individually by clicking a selected slice
+                                      again, or per chart, by clicking the reset button next to the charts name."
+                data-bootstro-step = "1"
+                data-bootstro-placement="bottom">
+
+                <div class="col-xs-12 col-sm-6 col-md-4 pie-chart">
+                    <h4>Year <small><a id="Year">reset</a></small></h4>
+                    <div class="dc-chart" id="chart-Year"></div>
+                </div>
+                <div class="col-xs-12 col-sm-6 col-md-4 pie-chart">
+                    <h4>Month <small><a id="Month">reset</a></small></h4>
+                    <div class="dc-chart" id="chart-Month"></div>
+                </div>
+                <div class="col-xs-12 col-sm-6 col-md-4 pie-chart">
+                    <h4>Day <small><a id="Day">reset</a></small></h4>
+                    <div class="dc-chart" id="chart-Day"></div>
+                </div>
+            </div>
+            <div class="col-xs-12 col-lg-4 bootstro"
+                data-bootstro-title=" Bar-chart / histogram of dates"
+                data-bootstro-content="This bar-chart/histogram represents the distributions of dates in your
+                                       metadata. You can select a range of dates by pressing down the left
+                                       mouse button and dragging your mouse across the selected dates.
+                                       <br><br>
+                                       The selected region could be moved around by dragging it or modified by
+                                       dragging the handlers at either side of the range.
+                                       <br><br>
+                                       Clicking anywhere on the unselected region, or the reset button above
+                                       will cancel the filter."
+                data-bootstro-step = "2"
+                data-bootstro-placement="bottom">
+                <h4>Dates <small><a id="Date">reset</a></small></h4>
+                <div class="dc-chart" id="chart-Date"></div>
+            </div>
+        {% endif %}
+
+        <!-- =============================================================== -->
+        <!--  C A T E G O R I C A L  C H A R T S -->
+
+        {% for chart in charts.cat_charts %}
+            <div class="col-xs-12 col-sm-6 col-md-6 col-lg-4 pie-chart
+            {% if loop.index == 1 %}
+                    bootstro"
+                 {% if dash_vars.date %}
+                    data-bootstro-title="Pie-charts for categorical data"
+                    data-bootstro-content="These pie-charts work just like the ones of the date section.
+                                          If any of the names of the uploaded categorical variable is too long
+                                          to be displayed in a pie-chart, {{ config['APP_NAME'] }} will use a horizontal
+                                          bar-chart instead."
+                    data-bootstro-step = "3"
+                    data-bootstro-placement="bottom"
+                 {% else %}
+                    data-bootstro-title="Pie-charts for categorical data"
+                    data-bootstro-content="These pie-charts represent the categorical variables in your metadata.
+                                           You can select any slice of the pie-charts. This will apply a filter
+                                           to the whole dataset, updating all other charts, and showing only
+                                           the part of the dataset that falls into the slice you clicked.
+                                           Go ahead and try it now!
+                                           <br><br>
+                                           Multiple slices of the same pie-chart could be selected simultaneously.
+                                           <br><br>
+                                           You can also apply multiple filters simultaneously by selecting more than
+                                           one pie-charts.
+                                           <br><br>
+                                           The selections could be reverted individually by clicking a selected slice
+                                           again, or per chart, by clicking the reset button next to the charts name.
+                                           <br><br>
+                                           If any of the names of the uploaded categorical variable is too long
+                                           to be displayed in a pie-chart, {{ config['APP_NAME'] }} will use a horizontal
+                                           bar-chart instead."
+                    data-bootstro-step = "1"
+                    data-bootstro-placement="bottom"
+                 {% endif %}
+            {% else %}
+                 "
+            {% endif %}
+            >
+                <h4>{{ chart }}<small><a id="{{ chart }}"> reset</a></small></h4>
+                <div class="dc-chart" id="chart-{{ chart }}"></div>
+            </div>
+        {% endfor %}
+
+        <!-- =============================================================== -->
+        <!--  C O N T I N U O U S  C H A R T S -->
+
+        {% for chart in charts.con_charts %}
+            <div class="col-xs-12 col-sm-12 col-md-6 col-lg-4
+             {% if loop.index == 1 %}
+                    bootstro"
+                 {% if dash_vars.date %}
+
+                    data-bootstro-title="Bar-charts for continuous data"
+                    data-bootstro-content="These bar-charts work just like the ones of the date section."
+                    data-bootstro-step = "4"
+                    data-bootstro-placement="bottom"
+                 {% else %}
+                    data-bootstro-title="Bar-charts for continuous data"
+                    data-bootstro-content="This bar-chart/histogram represents the distributions of the
+                                           continuous variable(s) in your metadata.
+                                           You can select a range of values by pressing down the left
+                                           mouse button and dragging your mouse across the selected dates.
+                                           <br><br>
+                                           The selected region could be moved around by dragging it or modified by
+                                           dragging the handlers at either side of the range.
+                                           <br><br>
+                                           Clicking anywhere on the unselected region, or the reset button above
+                                           will cancel the filter."
+                    data-bootstro-step = "2"
+                    data-bootstro-placement="bottom"
+                 {% endif %}
+            {% else %}
+                 "
+            {% endif %}
+            >
+                <h4>{{ chart }}<small><a id="{{ chart }}"> reset</a></small></h4>
+                <div class="dc-chart" id="chart-{{ chart }}"></div>
+            </div>
+        {% endfor %}
+
+        </div>
+    </div>
+    <!-- ===================================================================== -->
+    <!--  R I G H T   C O L U M N -->
+    <div class="{% if dash_vars.autocorr %}col-xs-12 col-sm-5 col-md-4{% else %}col-xs-12 col-sm-5 col-md-4 col-lg-6{% endif %}" style="padding-top: 10px;">
+        <!-- =============================================================== -->
+        <!--  P C A   1 -->
+        <div class="col-xs-12 {% if not dash_vars.autocorr %}col-lg-6{% endif %} bootstro"
+                data-bootstro-title="PCA plot"
+                data-bootstro-content="This is an interactive PCA plot of your dataset. You can select any of
+                                    the samples/patients by pressing your left mouse button and drawing an
+                                    appropriate selection. Why don't you try it now? You can move around your
+                                    selection by dragging it, or resize it at its edges."
+                data-bootstro-step = "{% if dash_vars.date %}7{% else %}5{% endif %}"
+                data-bootstro-placement="bottom">
+            <div class="col-xs-12 pca-controls">
+                <h4>
+                    <b>PCA of {{ dataset_types[0] }}</b> <small><a id="dataset1"> reset</a></small>
+                </h4>
+            </div>
+            <div class="col-xs-12 pca-controls bootstro"
+                data-bootstro-title="Colour selector"
+                data-bootstro-content="You can colour the PCA plots by any of the metadata you uploaded.
+                                       The categorical variables will use the same colour scale as the
+                                       corresponding pie/bar-chart."
+                data-bootstro-step = "{% if dash_vars.date %}8{% else %}6{% endif %}"
+                data-bootstro-placement="bottom">
+                <h4>
+                    Coloured by
+                    <select id="dataset1_colour">
+                        {% for chart in charts.all_charts %}
+                            <option value="{{ chart }}">{{ chart }}</option>
+                        {% endfor %}
+                    </select>
+                </h4>
+            </div>
+
+            <div class="col-xs-12 pca-controls bootstro"
+                data-bootstro-title="Principal component selector"
+                data-bootstro-content="The principal components of a PCA decomposition will explain decreasing
+                                       amount of variance of the dataset. This is shown as a percentage as axis-legend.
+                                       {{ config['APP_NAME'] }}, by default, will show the 1st and 2nd PCs, but interesting
+                                       patterns may be found in later components, so it's worth
+                                       checking those as well."
+                data-bootstro-step = "{% if dash_vars.date %}10{% else %}8{% endif %}"
+                data-bootstro-placement="bottom">
+                <h4>
+                    X-axis:
+                    <select id="dataset1_pcx">
+                        {% for pc in range(1, num_comp|int + 1) %}
+                            <option value="{{ pc}}">PC{{ pc }}</option>
+                        {% endfor %}
+                    </select>
+                    Y-axis:
+                    <select id="dataset1_pcy">
+                        {% for pc in range(1, num_comp|int + 1) %}
+                            <option value="{{ pc}}" {% if pc == 2 %}selected="selected"{% endif %}>PC{{ pc }}</option>
+                        {% endfor %}
+                    </select>
+                </h4>
+            </div>
+
+            {% if charts.con_charts|length > 0 %}
+            <div id="colour_legend" style="margin-top: 3px; margin-bottom: 5px; margin-left: -10px;" class="col-xs-12 bootstro"
+                data-bootstro-title="Colour legend for continuous variables"
+                data-bootstro-content="The continuous variables will follow this colour scale."
+                data-bootstro-step = "{% if dash_vars.date %}9{% else %}7{% endif %}"
+                data-bootstro-placement="bottom">
+                <i class="fa fa-circle" aria-hidden="true" style="color:#1D70AB"></i>min&ensp;
+                <i class="fa fa-circle" aria-hidden="true" style="color:#d91a1d"></i>max&ensp;
+                <i class="fa fa-circle" aria-hidden="true" style="color:#EAE1F0"></i>missing&ensp;
+            </div>
+            {% endif %}
+
+            <div class="col-xs-12 pca dc-chart" id="chart-dataset1"></div>
+        </div>
+
+        <!-- =============================================================== -->
+        <!--  P C A   2 -->
+        {% if not dash_vars.autocorr %}
+        <div class="col-xs-12 col-lg-6 bootstro"
+                data-bootstro-title=" PCA plot 2"
+                data-bootstro-content="This is an interactive PCA plot of your second dataset. Its selection
+                                      interacts with the other PCA plot and all other charts as well.
+                                      This means, if you select a cohort of samples/patients here (or the
+                                      other PCA plot), you can apply further filters to them by drawing
+                                      another selection on the other PCA plot."
+                data-bootstro-step = "{% if dash_vars.date %}11{% else %}9{% endif %}"
+                data-bootstro-placement="bottom">
+            <div class="col-xs-12 pca-controls ">
+                <h4>
+                    <b>PCA of {{ dataset_types[1] }}</b><small><a id="dataset2"> reset</a></small>
+                </h4>
+            </div>
+
+            <div class="col-xs-12 pca-controls" >
+                <h4>
+                    Coloured by:
+                    <select id="dataset2_colour">
+                        {% for chart in charts.all_charts %}
+                            <option value="{{ chart }}">{{ chart }}</option>
+                        {% endfor %}
+                    </select>
+                </h4>
+            </div>
+
+            <div class="col-xs-12 pca-controls" >
+                <h4>
+                    X-axis:
+                    <select id="dataset2_pcx">
+                        {% for pc in range(1, num_comp|int + 1) %}
+                            <option value="{{ pc}}">PC{{ pc }}</option>
+                        {% endfor %}
+                    </select>
+                    Y-axis:
+                    <select id="dataset2_pcy">
+                        {% for pc in range(1, num_comp|int + 1) %}
+                            <option value="{{ pc}}" {% if pc == 2 %}selected="selected"{% endif %}>PC{{ pc }}</option>
+                        {% endfor %}
+                    </select>
+                </h4>
+            </div>
+
+            <div style="margin-top:0px;" class="col-xs-12 col-lg-6 pca-controls bootstro"
+                data-bootstro-title=" Locking colours"
+                data-bootstro-content="Using this check box you can synchronise the colouring
+                                       of the two PCA plots for convenience."
+                data-bootstro-step = "{% if dash_vars.date %}12{% else %}10{% endif %}"
+                data-bootstro-placement="bottom">
+                <input type="checkbox" id="colour_lock" value="y">
+                Lock colour to {{ dataset_types[0]}}
+                &ensp;<i class="fa fa-lock" aria-hidden="true" style="font-size: 1.3em;"></i>
+            </div>
+            <div style="margin-top:0px;" class="col-xs-12 col-lg-6 pca-controls bootstro"
+                data-bootstro-title=" Locking PCs"
+                data-bootstro-content="Using this check box you can synchronise the PCs
+                                       of the two PCA plots for convenience."
+                data-bootstro-step = "{% if dash_vars.date %}13{% else %}11{% endif %}"
+                data-bootstro-placement="bottom">
+                <input type="checkbox" id="pc_lock" value="y">
+                Lock PCs to {{ dataset_types[0]}}
+                &ensp;<i class="fa fa-lock" aria-hidden="true" style="font-size: 1.3em;"></i>
+            </div>
+
+            <div class="col-xs-12 pca dc-chart" id="chart-dataset2"></div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ===================================================================== -->
+<!--  D A T A   T A B L E -->
+<div class="row">
+    <div class="col-xs-12 bootstro" style="padding-left: 30px; padding-right: 30px; padding-top: 20px"
+        data-bootstro-title="Data table"
+        data-bootstro-content="Here's the actual metadata table that you uploaded, which was used to
+                               generate the charts above. Every filter you apply to the charts will
+                               also filter this table and show you exactly which part of the data
+                               is used to draw the current state of the dashboard."
+        data-bootstro-step = "{% if dash_vars.date %}6{% else %}4{% endif %}">
+        <!-- ===================================================================== -->
+        <h3>Data table</h3>
+        <table class="table table-bordered table-striped" id="data-table">
+            <thead>
+            <tr class="header">
+                {% for col in dash_vars.cols %}
+                    <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+            </thead>
+        </table>
+    </div>
+</div>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/crossfilter/1.3.12/crossfilter.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/dc_min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/bootstro.js') }}"></script>
+<script type="text/javascript">
+    var data_loc = "{{ url_for('get_file', user_id=user_id, study_id=study_id, analysis=0, file=study_folder+'/dashboard/dashboard.json') }}";
+    var dashboard_intro = {{ dashboard_intro|int }};
+    function help(){
+        bootstro.start('.bootstro', {
+            onComplete: function (params) {
+                alert("You have reached the end of the tour. Press 'Ok I got it' button or the Esc key to exit.");
+            }
+        })
+    };
+    $('#help').click(help);
+</script>
+<script type="text/javascript" src="{{ url_for('get_file', user_id=user_id, study_id=study_id, analysis=0, file=study_folder+'/dashboard/dashboard.js') }}"></script>
+{% endblock %}

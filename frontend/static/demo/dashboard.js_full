@@ -1,0 +1,796 @@
+d3.json(data_loc, function (error, data) {
+    var metadata = data;
+    _.each(metadata, function(d) {
+
+    // ===================================================
+
+        d.CorrMapperID = +d.CorrMapperID;
+        d.AgeAtDiagnosis = +d.AgeAtDiagnosis;
+        d.DistalRecurrenceTime = +d.DistalRecurrenceTime;
+        d.dataset1_pc1 = +d.dataset1_pc1;
+        d.dataset1_pc2 = +d.dataset1_pc2;
+        d.dataset2_pc1 = +d.dataset2_pc1;
+        d.dataset2_pc2 = +d.dataset2_pc2;
+    });
+
+    // ===================================================
+
+    var ndx = crossfilter(metadata);
+    var DeadOfDiseaseDim  = ndx.dimension(dc.pluck('DeadOfDisease'));
+    var EstrogenReceptorDim  = ndx.dimension(dc.pluck('EstrogenReceptor'));
+    var DistalRecurrenceTimeRange = [0.0, 14.91];
+    var DistalRecurrenceTimeBinWidth = (DistalRecurrenceTimeRange[1]-DistalRecurrenceTimeRange[0])/15;
+    var DistalRecurrenceTimeDim = ndx.dimension(function(d) {
+        var DistalRecurrenceTimeThresholded = d.DistalRecurrenceTime;
+        return DistalRecurrenceTimeBinWidth * Math.floor(DistalRecurrenceTimeThresholded / DistalRecurrenceTimeBinWidth);
+    });
+    var HormolTherapyDim  = ndx.dimension(dc.pluck('HormolTherapy'));
+    var chemotherapy_treatmentDim  = ndx.dimension(dc.pluck('chemotherapy_treatment'));
+    var p53_positiveDim  = ndx.dimension(dc.pluck('p53_positive'));
+    var RecurrenceDim  = ndx.dimension(dc.pluck('Recurrence'));
+    var RadiationTreatmentDim  = ndx.dimension(dc.pluck('RadiationTreatment'));
+    var FamilyHistoryDim  = ndx.dimension(dc.pluck('FamilyHistory'));
+    var ProgesteroneReceptorDim  = ndx.dimension(dc.pluck('ProgesteroneReceptor'));
+    var TumorStagingDim  = ndx.dimension(dc.pluck('TumorStaging'));
+    var NodePositiveDim  = ndx.dimension(dc.pluck('NodePositive'));
+    var ErbB2_positiveDim  = ndx.dimension(dc.pluck('ErbB2_positive'));
+    var EthnicityDim  = ndx.dimension(dc.pluck('Ethnicity'));
+    var AgeAtDiagnosisRange = [29.45, 92.4];
+    var AgeAtDiagnosisBinWidth = (AgeAtDiagnosisRange[1]-AgeAtDiagnosisRange[0])/15;
+    var AgeAtDiagnosisDim = ndx.dimension(function(d) {
+        var AgeAtDiagnosisThresholded = d.AgeAtDiagnosis;
+        return AgeAtDiagnosisBinWidth * Math.floor(AgeAtDiagnosisThresholded / AgeAtDiagnosisBinWidth);
+    });
+    var dataset1Dim = ndx.dimension(function (d) {return [d.dataset1_pc1, d.dataset1_pc2];});
+    var dataset2Dim = ndx.dimension(function (d) {return [d.dataset2_pc1, d.dataset2_pc2];});
+    var allDim = ndx.dimension(function(d) {return d;});
+
+    // ===================================================
+
+    function rAdd(p, v) {
+        ++p.count;
+        p.color['DeadOfDisease'] = v.DeadOfDisease;
+        p.color['EstrogenReceptor'] = v.EstrogenReceptor;
+        p.color['DistalRecurrenceTime'] = v.DistalRecurrenceTime;
+        p.color['HormolTherapy'] = v.HormolTherapy;
+        p.color['chemotherapy_treatment'] = v.chemotherapy_treatment;
+        p.color['p53_positive'] = v.p53_positive;
+        p.color['Recurrence'] = v.Recurrence;
+        p.color['RadiationTreatment'] = v.RadiationTreatment;
+        p.color['FamilyHistory'] = v.FamilyHistory;
+        p.color['ProgesteroneReceptor'] = v.ProgesteroneReceptor;
+        p.color['TumorStaging'] = v.TumorStaging;
+        p.color['NodePositive'] = v.NodePositive;
+        p.color['ErbB2_positive'] = v.ErbB2_positive;
+        p.color['Ethnicity'] = v.Ethnicity;
+        p.color['AgeAtDiagnosis'] = v.AgeAtDiagnosis;
+        p.color['CorrMapperID'] = v.CorrMapperID;
+        return p;
+    }
+    function rRemove(p, v) {
+        --p.count;
+        p.color['DeadOfDisease'] = v.DeadOfDisease;
+        p.color['EstrogenReceptor'] = v.EstrogenReceptor;
+        p.color['DistalRecurrenceTime'] = v.DistalRecurrenceTime;
+        p.color['HormolTherapy'] = v.HormolTherapy;
+        p.color['chemotherapy_treatment'] = v.chemotherapy_treatment;
+        p.color['p53_positive'] = v.p53_positive;
+        p.color['Recurrence'] = v.Recurrence;
+        p.color['RadiationTreatment'] = v.RadiationTreatment;
+        p.color['FamilyHistory'] = v.FamilyHistory;
+        p.color['ProgesteroneReceptor'] = v.ProgesteroneReceptor;
+        p.color['TumorStaging'] = v.TumorStaging;
+        p.color['NodePositive'] = v.NodePositive;
+        p.color['ErbB2_positive'] = v.ErbB2_positive;
+        p.color['Ethnicity'] = v.Ethnicity;
+        p.color['AgeAtDiagnosis'] = v.AgeAtDiagnosis;
+        p.color['CorrMapperID'] = v.CorrMapperID;
+        return p;
+    }
+    function rInit() {
+        return {count: 0, color:{}};
+    }
+
+    // ===================================================
+
+    var countPerDeadOfDisease = DeadOfDiseaseDim.group().reduceCount();
+    var countPerEstrogenReceptor = EstrogenReceptorDim.group().reduceCount();
+    var countPerDistalRecurrenceTime = DistalRecurrenceTimeDim.group().reduceCount();
+    var countPerHormolTherapy = HormolTherapyDim.group().reduceCount();
+    var countPerchemotherapy_treatment = chemotherapy_treatmentDim.group().reduceCount();
+    var countPerp53_positive = p53_positiveDim.group().reduceCount();
+    var countPerRecurrence = RecurrenceDim.group().reduceCount();
+    var countPerRadiationTreatment = RadiationTreatmentDim.group().reduceCount();
+    var countPerFamilyHistory = FamilyHistoryDim.group().reduceCount();
+    var countPerProgesteroneReceptor = ProgesteroneReceptorDim.group().reduceCount();
+    var countPerTumorStaging = TumorStagingDim.group().reduceCount();
+    var countPerNodePositive = NodePositiveDim.group().reduceCount();
+    var countPerErbB2_positive = ErbB2_positiveDim.group().reduceCount();
+    var countPerEthnicity = EthnicityDim.group().reduceCount();
+    var countPerAgeAtDiagnosis = AgeAtDiagnosisDim.group().reduceCount();
+    var countPerDataset1 = dataset1Dim.group().reduce(rAdd,rRemove,rInit);
+    var countPerDataset2 = dataset2Dim.group().reduce(rAdd,rRemove,rInit);
+    var all = ndx.groupAll();
+
+    // ===================================================
+
+    var AgeAtDiagnosisChart  = dc.barChart('#chart-AgeAtDiagnosis');
+    var DistalRecurrenceTimeChart  = dc.barChart('#chart-DistalRecurrenceTime');
+    var DeadOfDiseaseChart = dc.pieChart('#chart-DeadOfDisease');
+    var ErbB2_positiveChart = dc.pieChart('#chart-ErbB2_positive');
+    var EstrogenReceptorChart = dc.pieChart('#chart-EstrogenReceptor');
+    var EthnicityChart = dc.rowChart('#chart-Ethnicity');
+    var FamilyHistoryChart = dc.pieChart('#chart-FamilyHistory');
+    var HormolTherapyChart = dc.pieChart('#chart-HormolTherapy');
+    var NodePositiveChart = dc.pieChart('#chart-NodePositive');
+    var ProgesteroneReceptorChart = dc.pieChart('#chart-ProgesteroneReceptor');
+    var RadiationTreatmentChart = dc.pieChart('#chart-RadiationTreatment');
+    var RecurrenceChart = dc.pieChart('#chart-Recurrence');
+    var TumorStagingChart = dc.pieChart('#chart-TumorStaging');
+    var chemotherapy_treatmentChart = dc.pieChart('#chart-chemotherapy_treatment');
+    var p53_positiveChart = dc.pieChart('#chart-p53_positive');
+    var dataset1Chart = dc.scatterPlot('#chart-dataset1');
+    var dataset2Chart = dc.scatterPlot('#chart-dataset2');
+    var dataCount = dc.dataCount('#data-count');
+    var dataTable = dc.dataTable('#data-table');
+
+    // ===================================================
+
+    var DeadOfDiseaseColor = d3.scale.category10();
+    DeadOfDiseaseChart
+        .width(d3.select('#chart-DeadOfDisease').node().parentNode.getBoundingClientRect().width * 0.9)
+        .height(184)
+        .dimension(DeadOfDiseaseDim)
+        .group(countPerDeadOfDisease)
+        .colors(function (d) {return DeadOfDiseaseColor(d);})
+        .innerRadius(30);
+
+    var ErbB2_positiveColor = d3.scale.category10();
+    ErbB2_positiveChart
+        .width(d3.select('#chart-ErbB2_positive').node().parentNode.getBoundingClientRect().width * 0.9)
+        .height(184)
+        .dimension(ErbB2_positiveDim)
+        .group(countPerErbB2_positive)
+        .colors(function (d) {return ErbB2_positiveColor(d);})
+        .innerRadius(30);
+
+    var EstrogenReceptorColor = d3.scale.category10();
+    EstrogenReceptorChart
+        .width(d3.select('#chart-EstrogenReceptor').node().parentNode.getBoundingClientRect().width * 0.9)
+        .height(184)
+        .dimension(EstrogenReceptorDim)
+        .group(countPerEstrogenReceptor)
+        .colors(function (d) {return EstrogenReceptorColor(d);})
+        .innerRadius(30);
+
+    var FamilyHistoryColor = d3.scale.category10();
+    FamilyHistoryChart
+        .width(d3.select('#chart-FamilyHistory').node().parentNode.getBoundingClientRect().width * 0.9)
+        .height(184)
+        .dimension(FamilyHistoryDim)
+        .group(countPerFamilyHistory)
+        .colors(function (d) {return FamilyHistoryColor(d);})
+        .innerRadius(30);
+
+    var HormolTherapyColor = d3.scale.category10();
+    HormolTherapyChart
+        .width(d3.select('#chart-HormolTherapy').node().parentNode.getBoundingClientRect().width * 0.9)
+        .height(184)
+        .dimension(HormolTherapyDim)
+        .group(countPerHormolTherapy)
+        .colors(function (d) {return HormolTherapyColor(d);})
+        .innerRadius(30);
+
+    var NodePositiveColor = d3.scale.category10();
+    NodePositiveChart
+        .width(d3.select('#chart-NodePositive').node().parentNode.getBoundingClientRect().width * 0.9)
+        .height(184)
+        .dimension(NodePositiveDim)
+        .group(countPerNodePositive)
+        .colors(function (d) {return NodePositiveColor(d);})
+        .innerRadius(30);
+
+    var ProgesteroneReceptorColor = d3.scale.category10();
+    ProgesteroneReceptorChart
+        .width(d3.select('#chart-ProgesteroneReceptor').node().parentNode.getBoundingClientRect().width * 0.9)
+        .height(184)
+        .dimension(ProgesteroneReceptorDim)
+        .group(countPerProgesteroneReceptor)
+        .colors(function (d) {return ProgesteroneReceptorColor(d);})
+        .innerRadius(30);
+
+    var RadiationTreatmentColor = d3.scale.category10();
+    RadiationTreatmentChart
+        .width(d3.select('#chart-RadiationTreatment').node().parentNode.getBoundingClientRect().width * 0.9)
+        .height(184)
+        .dimension(RadiationTreatmentDim)
+        .group(countPerRadiationTreatment)
+        .colors(function (d) {return RadiationTreatmentColor(d);})
+        .innerRadius(30);
+
+    var RecurrenceColor = d3.scale.category10();
+    RecurrenceChart
+        .width(d3.select('#chart-Recurrence').node().parentNode.getBoundingClientRect().width * 0.9)
+        .height(184)
+        .dimension(RecurrenceDim)
+        .group(countPerRecurrence)
+        .colors(function (d) {return RecurrenceColor(d);})
+        .innerRadius(30);
+
+    var TumorStagingColor = d3.scale.category10();
+    TumorStagingChart
+        .width(d3.select('#chart-TumorStaging').node().parentNode.getBoundingClientRect().width * 0.9)
+        .height(184)
+        .dimension(TumorStagingDim)
+        .group(countPerTumorStaging)
+        .colors(function (d) {return TumorStagingColor(d);})
+        .innerRadius(30);
+
+    var chemotherapy_treatmentColor = d3.scale.category10();
+    chemotherapy_treatmentChart
+        .width(d3.select('#chart-chemotherapy_treatment').node().parentNode.getBoundingClientRect().width * 0.9)
+        .height(184)
+        .dimension(chemotherapy_treatmentDim)
+        .group(countPerchemotherapy_treatment)
+        .colors(function (d) {return chemotherapy_treatmentColor(d);})
+        .innerRadius(30);
+
+    var p53_positiveColor = d3.scale.category10();
+    p53_positiveChart
+        .width(d3.select('#chart-p53_positive').node().parentNode.getBoundingClientRect().width * 0.9)
+        .height(184)
+        .dimension(p53_positiveDim)
+        .group(countPerp53_positive)
+        .colors(function (d) {return p53_positiveColor(d);})
+        .innerRadius(30);
+
+    // ===================================================
+
+    var EthnicityColor = d3.scale.category10();
+    EthnicityChart
+        .width(d3.select('#chart-Ethnicity').node().parentNode.getBoundingClientRect().width * 0.9)
+        .height(184)
+        .dimension(EthnicityDim)
+        .group(countPerEthnicity)
+        .colors(function (d) {return EthnicityColor(d);});
+
+    // ===================================================
+
+    var minAgeAtDiagnosis = 29.45;
+    var medianAgeAtDiagnosis = 51.0;
+    var maxAgeAtDiagnosis = 92.4;
+    var AgeAtDiagnosisColor = d3.scale.linear()
+        .domain([minAgeAtDiagnosis, d3.mean([minAgeAtDiagnosis, medianAgeAtDiagnosis]), medianAgeAtDiagnosis, d3.mean([maxAgeAtDiagnosis, medianAgeAtDiagnosis]), maxAgeAtDiagnosis, 2*maxAgeAtDiagnosis])
+        .range(['#144c73', '#1D70AB', '#fff','#921113', '#d91a1d', '#EAE1F0'])
+        .interpolate(d3.interpolateHsl);
+    AgeAtDiagnosisChart
+        .width(d3.select('#chart-AgeAtDiagnosis').node().parentNode.getBoundingClientRect().width * 0.9)
+        .height(184)
+        .dimension(AgeAtDiagnosisDim)
+        .group(countPerAgeAtDiagnosis)
+        .elasticY(true)
+        .barPadding(1)
+        .renderHorizontalGridLines(true)
+        .margins({top: 10, right: 10, bottom: 20, left: 30})
+        .x(d3.scale.linear().domain([minAgeAtDiagnosis, maxAgeAtDiagnosis]))
+        .xUnits(dc.units.fp.precision(AgeAtDiagnosisBinWidth))
+        .round(function(d) {
+            return AgeAtDiagnosisBinWidth * Math.floor(d / AgeAtDiagnosisBinWidth)
+        });
+
+    var minDistalRecurrenceTime = 0.0;
+    var medianDistalRecurrenceTime = 5.63;
+    var maxDistalRecurrenceTime = 14.91;
+    var DistalRecurrenceTimeColor = d3.scale.linear()
+        .domain([minDistalRecurrenceTime, d3.mean([minDistalRecurrenceTime, medianDistalRecurrenceTime]), medianDistalRecurrenceTime, d3.mean([maxDistalRecurrenceTime, medianDistalRecurrenceTime]), maxDistalRecurrenceTime, 2*maxDistalRecurrenceTime])
+        .range(['#144c73', '#1D70AB', '#fff','#921113', '#d91a1d', '#EAE1F0'])
+        .interpolate(d3.interpolateHsl);
+    DistalRecurrenceTimeChart
+        .width(d3.select('#chart-DistalRecurrenceTime').node().parentNode.getBoundingClientRect().width * 0.9)
+        .height(184)
+        .dimension(DistalRecurrenceTimeDim)
+        .group(countPerDistalRecurrenceTime)
+        .elasticY(true)
+        .barPadding(1)
+        .renderHorizontalGridLines(true)
+        .margins({top: 10, right: 10, bottom: 20, left: 30})
+        .x(d3.scale.linear().domain([minDistalRecurrenceTime, maxDistalRecurrenceTime]))
+        .xUnits(dc.units.fp.precision(DistalRecurrenceTimeBinWidth))
+        .round(function(d) {
+            return DistalRecurrenceTimeBinWidth * Math.floor(d / DistalRecurrenceTimeBinWidth)
+        });
+
+    // ===================================================
+
+    var dataset1_pcs = {};
+    dataset1_pcs['min_pc1'] = -87.4945836552*1.1;
+    dataset1_pcs['max_pc1'] = 85.1322128935*1.1;
+    dataset1_pcs['var_pc1'] = 'PC1 13.46%'
+    dataset1_pcs['min_pc2'] = -86.0447381227*1.1;
+    dataset1_pcs['max_pc2'] = 67.6311982962*1.1;
+    dataset1_pcs['var_pc2'] = 'PC2 12.56%'
+    dataset1_pcs['min_pc3'] = -49.5716981486*1.1;
+    dataset1_pcs['max_pc3'] = 44.6775673922*1.1;
+    dataset1_pcs['var_pc3'] = 'PC3 5.12%'
+    dataset1_pcs['min_pc4'] = -40.0586554142*1.1;
+    dataset1_pcs['max_pc4'] = 41.3822085189*1.1;
+    dataset1_pcs['var_pc4'] = 'PC4 4.07%'
+    dataset1_pcs['min_pc5'] = -58.7934890983*1.1;
+    dataset1_pcs['max_pc5'] = 36.9153056131*1.1;
+    dataset1_pcs['var_pc5'] = 'PC5 3.75%'
+    dataset1Chart
+        .width(d3.select('#chart-dataset1').node().parentNode.getBoundingClientRect().width * 0.9)
+        .height(d3.select('#chart-dataset1').node().parentNode.getBoundingClientRect().width * 0.9)
+        .dimension(dataset1Dim)
+        .group(countPerDataset1)
+        .margins({top: 20, right: 10, bottom: 40, left: 40})
+        .x(d3.scale.linear().domain([dataset1_pcs['min_pc1'], dataset1_pcs['max_pc1']]))
+        .y(d3.scale.linear().domain([dataset1_pcs['min_pc2'], dataset1_pcs['max_pc2']]))
+        .xAxisLabel(dataset1_pcs['var_pc1'])
+        .yAxisLabel(dataset1_pcs['var_pc2'])
+        .clipPadding(10)
+        .symbolSize(10)
+        .renderHorizontalGridLines(true)
+        .renderVerticalGridLines(true)
+        .colorAccessor(function(d) {return d.value.color[d3.select('#dataset1_colour').property('value')];})
+        .colors(function (d) {return colourSwitcher1(d);})
+        .existenceAccessor(function(d) { return d.value.count; });
+
+    var dataset2_pcs = {};
+    dataset2_pcs['min_pc1'] = -2.91213678104*1.1;
+    dataset2_pcs['max_pc1'] = 12.9374708184*1.1;
+    dataset2_pcs['var_pc1'] = 'PC1 9.31%'
+    dataset2_pcs['min_pc2'] = -5.44205846039*1.1;
+    dataset2_pcs['max_pc2'] = 7.56356474742*1.1;
+    dataset2_pcs['var_pc2'] = 'PC2 6.06%'
+    dataset2_pcs['min_pc3'] = -5.80736096645*1.1;
+    dataset2_pcs['max_pc3'] = 5.03633134485*1.1;
+    dataset2_pcs['var_pc3'] = 'PC3 4.57%'
+    dataset2_pcs['min_pc4'] = -5.41212024271*1.1;
+    dataset2_pcs['max_pc4'] = 6.15070277059*1.1;
+    dataset2_pcs['var_pc4'] = 'PC4 4.27%'
+    dataset2_pcs['min_pc5'] = -6.84164217675*1.1;
+    dataset2_pcs['max_pc5'] = 7.00380143837*1.1;
+    dataset2_pcs['var_pc5'] = 'PC5 3.68%'
+    dataset2Chart
+        .width(d3.select('#chart-dataset2').node().parentNode.getBoundingClientRect().width * 0.9)
+        .height(d3.select('#chart-dataset2').node().parentNode.getBoundingClientRect().width * 0.9)
+        .dimension(dataset2Dim)
+        .group(countPerDataset2)
+        .margins({top: 20, right: 10, bottom: 40, left: 40})
+        .x(d3.scale.linear().domain([dataset2_pcs['min_pc1'], dataset2_pcs['max_pc1']]))
+        .y(d3.scale.linear().domain([dataset2_pcs['min_pc2'], dataset2_pcs['max_pc2']]))
+        .xAxisLabel(dataset2_pcs['var_pc1'])
+        .yAxisLabel(dataset2_pcs['var_pc2'])
+        .clipPadding(10)
+        .symbolSize(10)
+        .renderHorizontalGridLines(true)
+        .renderVerticalGridLines(true)
+        .colorAccessor(function(d) {return d.value.color[d3.select('#dataset2_colour').property('value')];})
+        .colors(function (d) {return colourSwitcher2(d);})
+        .existenceAccessor(function(d) { return d.value.count; });
+
+    // ===================================================
+
+    dataCount
+        .dimension(ndx)
+        .group(all);
+
+    dataTable
+        .dimension(allDim)
+        .group(function (d) { return '';})
+        .size(130)
+        .columns([
+            function (d) { return d.ID; },
+            function (d) { return d.AgeAtDiagnosis; },
+            function (d) { return d.DeadOfDisease; },
+            function (d) { return d.DistalRecurrenceTime; },
+            function (d) { return d.ErbB2_positive; },
+            function (d) { return d.EstrogenReceptor; },
+            function (d) { return d.Ethnicity; },
+            function (d) { return d.FamilyHistory; },
+            function (d) { return d.HormolTherapy; },
+            function (d) { return d.NodePositive; },
+            function (d) { return d.ProgesteroneReceptor; },
+            function (d) { return d.RadiationTreatment; },
+            function (d) { return d.Recurrence; },
+            function (d) { return d.TumorStaging; },
+            function (d) { return d.chemotherapy_treatment; },
+            function (d) { return d.p53_positive; },
+        ])
+        .sortBy(dc.pluck('ID'))
+        .order(d3.ascending)
+        .on('renderlet', function (table) {
+            table.select('tr.dc-table-group').remove();
+        });
+
+    // ===================================================
+
+    $('#dataset1_colour').change(function(){
+        if(document.getElementById('colour_lock').checked) {
+            $('#dataset2_colour').val($(this).val());
+            dataset2Chart.redraw();
+        }
+        dataset1Chart.redraw();
+    });
+    function colourSwitcher1(val){
+        var pca_colour = d3.select('#dataset1_colour').property('value');
+        switch(pca_colour) {
+            case 'DeadOfDisease':
+                return DeadOfDiseaseColor(val);
+            case 'EstrogenReceptor':
+                return EstrogenReceptorColor(val);
+            case 'DistalRecurrenceTime':
+                return DistalRecurrenceTimeColor(val);
+            case 'HormolTherapy':
+                return HormolTherapyColor(val);
+            case 'chemotherapy_treatment':
+                return chemotherapy_treatmentColor(val);
+            case 'p53_positive':
+                return p53_positiveColor(val);
+            case 'Recurrence':
+                return RecurrenceColor(val);
+            case 'RadiationTreatment':
+                return RadiationTreatmentColor(val);
+            case 'FamilyHistory':
+                return FamilyHistoryColor(val);
+            case 'ProgesteroneReceptor':
+                return ProgesteroneReceptorColor(val);
+            case 'TumorStaging':
+                return TumorStagingColor(val);
+            case 'NodePositive':
+                return NodePositiveColor(val);
+            case 'ErbB2_positive':
+                return ErbB2_positiveColor(val);
+            case 'Ethnicity':
+                return EthnicityColor(val);
+            case 'AgeAtDiagnosis':
+                return AgeAtDiagnosisColor(val);
+        }
+    }
+
+    $('#dataset1_pcx').change(dataset1_pc_xy);
+    $('#dataset1_pcy').change(dataset1_pc_xy);
+    function dataset1_pc_xy (){
+        if(document.getElementById('pc_lock').checked) {
+            if ($('#dataset1_pcx').val() != $('#dataset2_pcx').val() ||
+                $('#dataset1_pcy').val() != $('#dataset2_pcy').val()) {
+                $('#dataset2_pcx').val($('#dataset1_pcx').val());
+                $('#dataset2_pcy').val($('#dataset1_pcy').val());
+                dataset2_pc_xy();
+            }
+        }
+        var x = $('#dataset1_pcx').val();
+        var y = $('#dataset1_pcy').val();
+        var filteredPCA = dataset1Dim.top(Infinity);
+        var new_pcx = filteredPCA.filter(function(obj){ return obj['dataset1_pc' + x] <= dataset1_pcs['max_pc' + x]});
+        var new_pcy = filteredPCA.filter(function(obj){ return obj['dataset1_pc' + y] <= dataset1_pcs['max_pc' + y]});
+        new_pcx = new_pcx.map(function(obj){return obj['dataset1_pc' + x]});
+        new_pcy = new_pcy.map(function(obj){return obj['dataset1_pc' + y]});
+        var resizeTimer;
+        if(filteredPCA.length != 130 && filteredPCA.length != 0 && new_pcx.length > 0 && new_pcy.length > 0){
+            var new_pcx_max = Math.max.apply(null, new_pcx);
+            var new_pcx_min = Math.min.apply(null, new_pcx);
+            var new_pcy_max = Math.max.apply(null, new_pcy);
+            var new_pcy_min = Math.min.apply(null, new_pcy);
+            new_pcx_max += Math.abs(new_pcx_max)*.1;
+            new_pcx_min -= Math.abs(new_pcx_min)*.1;
+            new_pcy_max += Math.abs(new_pcy_max)*.1;
+            new_pcy_min -= Math.abs(new_pcy_min)*.1;
+            dataset1Dim.dispose();
+            dataset1Dim = ndx.dimension(function (d) {return [d['dataset1_pc' + x], d['dataset1_pc' + y]];});
+            countPerDataset1 = dataset1Dim.group().reduce(rAdd,rRemove,rInit);
+            dataset1Chart
+                .dimension(dataset1Dim)
+                .group(countPerDataset1)
+                .x(d3.scale.linear().domain([dataset1_pcs['min_pc' + x], dataset1_pcs['max_pc' + x]]))
+                .y(d3.scale.linear().domain([dataset1_pcs['min_pc' + y], dataset1_pcs['max_pc' + y]]))
+                .xAxisLabel(dataset1_pcs['var_pc' + x])
+                .yAxisLabel(dataset1_pcs['var_pc' + y])
+                .filter(null)
+                .filter(dc.filters.RangedTwoDimensionalFilter([[new_pcx_min, new_pcy_min], [new_pcx_max, new_pcy_max]]))
+                .redraw();
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function() {
+                dc.redrawAll();
+            }, 100)
+        } else{
+            dataset1Dim.dispose();
+            dataset1Dim = ndx.dimension(function (d) {return [d['dataset1_pc' + x], d['dataset1_pc' + y]];});
+            countPerDataset1 = dataset1Dim.group().reduce(rAdd,rRemove,rInit);
+            dataset1Chart.filterAll();
+            dc.redrawAll();
+            dataset1Chart
+                .dimension(dataset1Dim)
+                .group(countPerDataset1)
+                .x(d3.scale.linear().domain([dataset1_pcs['min_pc' + x], dataset1_pcs['max_pc' + x]]))
+                .y(d3.scale.linear().domain([dataset1_pcs['min_pc' + y], dataset1_pcs['max_pc' + y]]))
+                .xAxisLabel(dataset1_pcs['var_pc' + x])
+                .yAxisLabel(dataset1_pcs['var_pc' + y])
+                .filterAll()
+                .redraw();
+        }
+    }
+
+    $('#dataset2_colour').change(function(){
+        if(document.getElementById('colour_lock').checked) {
+            $('#dataset1_colour').val($(this).val());
+            dataset1Chart.redraw();
+        }
+        dataset2Chart.redraw();
+    });
+    function colourSwitcher2(val){
+        var pca_colour = d3.select('#dataset2_colour').property('value');
+        switch(pca_colour) {
+            case 'DeadOfDisease':
+                return DeadOfDiseaseColor(val);
+            case 'EstrogenReceptor':
+                return EstrogenReceptorColor(val);
+            case 'DistalRecurrenceTime':
+                return DistalRecurrenceTimeColor(val);
+            case 'HormolTherapy':
+                return HormolTherapyColor(val);
+            case 'chemotherapy_treatment':
+                return chemotherapy_treatmentColor(val);
+            case 'p53_positive':
+                return p53_positiveColor(val);
+            case 'Recurrence':
+                return RecurrenceColor(val);
+            case 'RadiationTreatment':
+                return RadiationTreatmentColor(val);
+            case 'FamilyHistory':
+                return FamilyHistoryColor(val);
+            case 'ProgesteroneReceptor':
+                return ProgesteroneReceptorColor(val);
+            case 'TumorStaging':
+                return TumorStagingColor(val);
+            case 'NodePositive':
+                return NodePositiveColor(val);
+            case 'ErbB2_positive':
+                return ErbB2_positiveColor(val);
+            case 'Ethnicity':
+                return EthnicityColor(val);
+            case 'AgeAtDiagnosis':
+                return AgeAtDiagnosisColor(val);
+        }
+    }
+
+    $('#colour_lock').change(function(){
+        if(document.getElementById('colour_lock').checked) {
+            $('#dataset2_colour').val($('#dataset1_colour').val());
+            dataset2Chart.redraw();
+        }
+    });
+
+    $('#dataset2_pcx').change(dataset2_pc_xy);
+    $('#dataset2_pcy').change(dataset2_pc_xy);
+    function dataset2_pc_xy (){
+        if(document.getElementById('pc_lock').checked) {
+            if ($('#dataset2_pcx').val() != $('#dataset1_pcx').val() ||
+                $('#dataset2_pcy').val() != $('#dataset1_pcy').val()) {
+                $('#dataset1_pcx').val($('#dataset2_pcx').val());
+                $('#dataset1_pcy').val($('#dataset2_pcy').val());
+                dataset1_pc_xy();
+            }
+        }
+        var x = $('#dataset2_pcx').val();
+        var y = $('#dataset2_pcy').val();
+        var filteredPCA = dataset2Dim.top(Infinity);
+        var new_pcx = filteredPCA.filter(function(obj){ return obj['dataset2_pc' + x] <= dataset2_pcs['max_pc' + x]});
+        var new_pcy = filteredPCA.filter(function(obj){ return obj['dataset2_pc' + y] <= dataset2_pcs['max_pc' + y]});
+        new_pcx = new_pcx.map(function(obj){return obj['dataset2_pc' + x]});
+        new_pcy = new_pcy.map(function(obj){return obj['dataset2_pc' + y]});
+        var resizeTimer;
+        if(filteredPCA.length != 130 && filteredPCA.length != 0 && new_pcx.length > 0 && new_pcy.length > 0){
+            var new_pcx_max = Math.max.apply(null, new_pcx);
+            var new_pcx_min = Math.min.apply(null, new_pcx);
+            var new_pcy_max = Math.max.apply(null, new_pcy);
+            var new_pcy_min = Math.min.apply(null, new_pcy);
+            new_pcx_max += Math.abs(new_pcx_max)*.1;
+            new_pcx_min -= Math.abs(new_pcx_min)*.1;
+            new_pcy_max += Math.abs(new_pcy_max)*.1;
+            new_pcy_min -= Math.abs(new_pcy_min)*.1;
+            dataset2Dim.dispose();
+            dataset2Dim = ndx.dimension(function (d) {return [d['dataset2_pc' + x], d['dataset2_pc' + y]];});
+            countPerDataset2 = dataset2Dim.group().reduce(rAdd,rRemove,rInit);
+            dataset2Chart
+                .dimension(dataset2Dim)
+                .group(countPerDataset2)
+                .x(d3.scale.linear().domain([dataset2_pcs['min_pc' + x], dataset2_pcs['max_pc' + x]]))
+                .y(d3.scale.linear().domain([dataset2_pcs['min_pc' + y], dataset2_pcs['max_pc' + y]]))
+                .xAxisLabel(dataset2_pcs['var_pc' + x])
+                .yAxisLabel(dataset2_pcs['var_pc' + y])
+                .filter(null)
+                .filter(dc.filters.RangedTwoDimensionalFilter([[new_pcx_min, new_pcy_min], [new_pcx_max, new_pcy_max]]))
+                .redraw();
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function() {
+                dc.redrawAll();
+            }, 100)
+        } else{
+            dataset2Dim.dispose();
+            dataset2Dim = ndx.dimension(function (d) {return [d['dataset2_pc' + x], d['dataset2_pc' + y]];});
+            countPerDataset2 = dataset2Dim.group().reduce(rAdd,rRemove,rInit);
+            dataset2Chart.filterAll();
+            dc.redrawAll();
+            dataset2Chart
+                .dimension(dataset2Dim)
+                .group(countPerDataset2)
+                .x(d3.scale.linear().domain([dataset2_pcs['min_pc' + x], dataset2_pcs['max_pc' + x]]))
+                .y(d3.scale.linear().domain([dataset2_pcs['min_pc' + y], dataset2_pcs['max_pc' + y]]))
+                .xAxisLabel(dataset2_pcs['var_pc' + x])
+                .yAxisLabel(dataset2_pcs['var_pc' + y])
+                .filterAll()
+                .redraw();
+        }
+    }
+
+    $('#pc_lock').change(function(){
+        if(document.getElementById('pc_lock').checked) {
+            $('#dataset2_pcx').val($('#dataset1_pcx').val());
+            $('#dataset2_pcy').val($('#dataset1_pcy').val());
+                dataset2_pc_xy();
+        }
+    });
+
+    // ===================================================
+
+    d3.selectAll('a#all').on('click', function () {
+        dc.filterAll();
+        dc.renderAll();
+    });
+    d3.selectAll('a#DeadOfDisease').on('click', function () {
+        DeadOfDiseaseChart.filterAll();
+        dc.redrawAll();
+    });
+    d3.selectAll('a#ErbB2_positive').on('click', function () {
+        ErbB2_positiveChart.filterAll();
+        dc.redrawAll();
+    });
+    d3.selectAll('a#EstrogenReceptor').on('click', function () {
+        EstrogenReceptorChart.filterAll();
+        dc.redrawAll();
+    });
+    d3.selectAll('a#FamilyHistory').on('click', function () {
+        FamilyHistoryChart.filterAll();
+        dc.redrawAll();
+    });
+    d3.selectAll('a#HormolTherapy').on('click', function () {
+        HormolTherapyChart.filterAll();
+        dc.redrawAll();
+    });
+    d3.selectAll('a#NodePositive').on('click', function () {
+        NodePositiveChart.filterAll();
+        dc.redrawAll();
+    });
+    d3.selectAll('a#ProgesteroneReceptor').on('click', function () {
+        ProgesteroneReceptorChart.filterAll();
+        dc.redrawAll();
+    });
+    d3.selectAll('a#RadiationTreatment').on('click', function () {
+        RadiationTreatmentChart.filterAll();
+        dc.redrawAll();
+    });
+    d3.selectAll('a#Recurrence').on('click', function () {
+        RecurrenceChart.filterAll();
+        dc.redrawAll();
+    });
+    d3.selectAll('a#TumorStaging').on('click', function () {
+        TumorStagingChart.filterAll();
+        dc.redrawAll();
+    });
+    d3.selectAll('a#chemotherapy_treatment').on('click', function () {
+        chemotherapy_treatmentChart.filterAll();
+        dc.redrawAll();
+    });
+    d3.selectAll('a#p53_positive').on('click', function () {
+        p53_positiveChart.filterAll();
+        dc.redrawAll();
+    });
+    d3.selectAll('a#Ethnicity').on('click', function () {
+        EthnicityChart.filterAll();
+        dc.redrawAll();
+    });
+    d3.selectAll('a#AgeAtDiagnosis').on('click', function () {
+        AgeAtDiagnosisChart.filterAll();
+        dc.redrawAll();
+    });
+    d3.selectAll('a#DistalRecurrenceTime').on('click', function () {
+        DistalRecurrenceTimeChart.filterAll();
+        dc.redrawAll();
+    });
+    d3.selectAll('a#dataset1').on('click', function () {
+        dataset1Chart.filterAll();
+        dc.redrawAll();
+    });
+    d3.selectAll('a#dataset2').on('click', function () {
+        dataset2Chart.filterAll();
+        dc.redrawAll();
+    });
+
+    dc.renderAll();
+    if (dashboard_intro == 1) {
+        help();
+    }
+
+    // ===================================================
+
+    var resizeTimer;
+    $(window).on('resize', function(e) {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            dataset1Chart
+                .width(d3.select('#chart-dataset1').node().parentNode.getBoundingClientRect().width * 0.9)
+                .height(d3.select('#chart-dataset1').node().parentNode.getBoundingClientRect().width * 0.9)
+                .rescale()
+                .redraw();
+            dataset2Chart
+                .width(d3.select('#chart-dataset2').node().parentNode.getBoundingClientRect().width * 0.9)
+                .height(d3.select('#chart-dataset2').node().parentNode.getBoundingClientRect().width * 0.9)
+                .rescale()
+                .redraw();
+            DeadOfDiseaseChart
+                .width(d3.select('#chart-DeadOfDisease').node().parentNode.getBoundingClientRect().width * 0.9)
+                .height(184)
+                .redraw();
+            EstrogenReceptorChart
+                .width(d3.select('#chart-EstrogenReceptor').node().parentNode.getBoundingClientRect().width * 0.9)
+                .height(184)
+                .redraw();
+            DistalRecurrenceTimeChart
+                .width(d3.select('#chart-DistalRecurrenceTime').node().parentNode.getBoundingClientRect().width * 0.9)
+                .height(184)
+                .rescale()
+                .redraw();
+            HormolTherapyChart
+                .width(d3.select('#chart-HormolTherapy').node().parentNode.getBoundingClientRect().width * 0.9)
+                .height(184)
+                .redraw();
+            chemotherapy_treatmentChart
+                .width(d3.select('#chart-chemotherapy_treatment').node().parentNode.getBoundingClientRect().width * 0.9)
+                .height(184)
+                .redraw();
+            p53_positiveChart
+                .width(d3.select('#chart-p53_positive').node().parentNode.getBoundingClientRect().width * 0.9)
+                .height(184)
+                .redraw();
+            RecurrenceChart
+                .width(d3.select('#chart-Recurrence').node().parentNode.getBoundingClientRect().width * 0.9)
+                .height(184)
+                .redraw();
+            RadiationTreatmentChart
+                .width(d3.select('#chart-RadiationTreatment').node().parentNode.getBoundingClientRect().width * 0.9)
+                .height(184)
+                .redraw();
+            FamilyHistoryChart
+                .width(d3.select('#chart-FamilyHistory').node().parentNode.getBoundingClientRect().width * 0.9)
+                .height(184)
+                .redraw();
+            ProgesteroneReceptorChart
+                .width(d3.select('#chart-ProgesteroneReceptor').node().parentNode.getBoundingClientRect().width * 0.9)
+                .height(184)
+                .redraw();
+            TumorStagingChart
+                .width(d3.select('#chart-TumorStaging').node().parentNode.getBoundingClientRect().width * 0.9)
+                .height(184)
+                .redraw();
+            NodePositiveChart
+                .width(d3.select('#chart-NodePositive').node().parentNode.getBoundingClientRect().width * 0.9)
+                .height(184)
+                .redraw();
+            AgeAtDiagnosisChart
+                .width(d3.select('#chart-AgeAtDiagnosis').node().parentNode.getBoundingClientRect().width * 0.9)
+                .height(184)
+                .rescale()
+                .redraw();
+            EthnicityChart
+                .width(d3.select('#chart-Ethnicity').node().parentNode.getBoundingClientRect().width * 0.9)
+                .height(184)
+                .redraw();
+            ErbB2_positiveChart
+                .width(d3.select('#chart-ErbB2_positive').node().parentNode.getBoundingClientRect().width * 0.9)
+                .height(184)
+                .redraw();
+        }, 100);
+    });
+});

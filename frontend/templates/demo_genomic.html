@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+{% set active_page = "" %}
+{% block layout %}
+
+<link href="{{ url_for('static', filename='css/bootstro.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/bootstrap-slider.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/vis_genomic.css') }}" rel="stylesheet">
+<link href="https://cdn.datatables.net/1.10.12/css/dataTables.bootstrap.min.css" rel="stylesheet">
+
+<!-- ===================================================================== -->
+<!--  H E A D E R  -->
+<div class="row">
+  <div class="col-xs-12 bootstro title"
+      data-bootstro-title=" Tour of genomic correlation network explorer"
+      data-bootstro-content="This demo shows CorrMapper's genomic correlation network explorer. A breast cancer
+                            study (Chin et al., 2006, Cell Cancer) of 130 patients was used to generate this.
+                            This was a multi-omics study with gene expression and copy number aberration assays
+                            used. <br><br>
+                            In studies like this it is incredibly useful to map out the correlations between the
+                            features of the two datasets. However, both datasets are extremely wide (p >> n),
+                            which often leads to very dense networks that are extremely hard or impossible to
+                            interpret.
+                            <br><br>
+                            CorrMapper uses clinical metadata driven feature selection to first filter out the
+                            features from both datasets that are biologically irrelevant to the investigation.
+                            <br><br>
+                            CorrMapper selected features from both datasets that discriminate most with respect
+                            to these patients' family history. Here you see the conditionally independent correlation
+                            network resulting from a regularised sparse covariance estimation process (GLASSO).
+                            <br><br>
+                            Looks like this is your first time using the genomic correlation network explorer of
+                            CorrMapper.
+                            Please take a minute to go through this tour and learn about the interface so you
+                            get the maximum out of your data. <br><br>
+                            You can navigate this tour with the buttons below, or with the
+                            &rarr; &darr;, &larr; &uarr; keys
+                            <br><br>
+                            You can skip this tour now, and come back to it later, clicking the question mark
+                            in the top-right corner.
+                            <br><br>
+                            <b>For the next part of the tour you might need to scroll down.</b>"
+      data-bootstro-step = "0"
+      data-bootstro-placement="bottom"
+      >
+      <h3>
+          <b>Genomic correlation network explorer for family history</b>
+          <a id="help" href="#" ><span class="fa fa-question" aria-hidden="true" style="float: right; padding-top: 0px; padding-right: 10px; font-size: 1em;"></span></a>
+      </h3>
+  </div>
+</div>
+
+<!-- ===================================================================== -->
+<!--  VIS  -->
+<div class="row">
+  <!-- =================================================================== -->
+  <!--  LEFT COLUMN  -->
+  <div id="leftCol" class="col-md-12 col-lg-6">
+
+      <!-- =============================================================== -->
+      <!--  CONTROLS  -->
+
+<div class="col-xs-12">
+
+            <!--  NAVSTART -->
+            <nav id="vis_nav" class="navbar navbar-default" style="margin-top: 20px; margin-bottom: 20px;">
+                <ul class="nav navbar-nav">
+
+                <!--  LEGEND -->
+                <li class="dropdown bootstro" data-bootstro-title="Legend"
+                            data-bootstro-content="The network's links represent bundles of correlations between long
+                                   stretches of the given species' genom. Therefore each link could be
+                                   a mixture of positive and negative correlations. The exact colour
+                                   is calculated as the median of the correlations within the edge."
+                            data-bootstro-step = "1"
+                            data-bootstro-placement="bottom">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Legend<span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="#"><i class="fa fa-circle" aria-hidden="true" style="color:#0971B2"></i>Mainly - corr</a></li>
+                        <li><a href="#"><i class="fa fa-circle" aria-hidden="true" style="color:#f2d9e5"></i>Mix of -/+ corr</a></li>
+                        <li><a href="#"><i class="fa fa-circle" aria-hidden="true" style="color:#CE1212"></i>Mainly + corr</a></li>
+                    </ul>
+                </li>
+
+                <!--  RESET -->
+                <li class="bootstro" data-bootstro-title="Reset selection"
+                            data-bootstro-content="Any selection or focus event could be cancelled using
+                            this reset button. This will bring back the networks and heatmap to their
+                            initial state. As a shortcut you can use the <b>Esc key</b> as well."
+                            data-bootstro-step = "2"
+                            data-bootstro-placement="bottom">
+                    <a href="#" id="reset">Reset</a>
+                </li>
+
+                    <!--  HIDE SCATTER-->
+                <form class="navbar-form navbar-left bootstro" data-bootstro-title="Hide scatter plots"
+                            data-bootstro-content="Hovering over any of rows of the dropdown subtables on the right
+                            will display a scatter plot of the raw data that went into the particular correlation.
+                            This could be switched off here.<br><br>"
+                            data-bootstro-step = "3"
+                            data-bootstro-placement="bottom">
+                    <div class="form-group" style="padding-top: 0px; padding-bottom: 0px">
+                        <input type="checkbox" data-size="small" data-toggle="toggle" data-on="Show scatters" data-off="Hide scatters" id="scatter-toggle">
+                    </div>
+                </form>
+                </ul>
+            </nav>
+        </div>
+
+        <div id="sliders" class="col-xs-12 controls bootstro"
+             data-bootstro-content="To aid the visual exploration of the network, it could be
+                                   redrawn and filtered in the following ways. <br>
+                                   <br><b>Correlation filter:</b> with this slider the network could be
+                                   easily filtered to only show a selected range of correlations. Note,
+                                   that the tables will get filtered as well accordingly. This make it very
+                                   easy to only discover correlations within a certain range.
+                                   <br><b>Edge bundling:</b> as this slider goes from 1% to 100% the
+                                   edges of the network are forced together more and more by a
+                                   hierarchical edge bundling algorithm, grouping together edges
+                                   that head in the same direction.
+                                   <br><b>Corr / edge:</b> this slider filters edges with
+                                   fewer (or more) correlations. Note, the tables will not get filtered.
+                                   This filter merely serves  visual interpretation of the network."
+             data-bootstro-title="Network filters"
+             data-bootstro-step = "5"
+             data-bootstro-placement="bottom"
+             style="margin-top: -25px; margin-left: 15px"
+            >
+
+
+            Corr filter: <b>-1</b>&nbsp;&nbsp; <input id="corrFilterSlider" type="text" class="span2" value="" data-slider-min="-1" data-slider-max="1"
+                   data-slider-step=".01" data-slider-value="[-1,1]" > &nbsp;&nbsp;<b>1</b>
+            &nbsp;<span style="color: #aaaaaa">|</span>&nbsp;
+            Edge bundling: <b>0%</b>&nbsp;&nbsp; <input id="edgeBundlingSlider" type="text" class="span2" value="" data-slider-min="1" data-slider-max="100"
+                   data-slider-step="1" data-slider-value="85" > &nbsp;&nbsp;<b>100%</b>
+            &nbsp;<span style="color: #aaaaaa">|</span>&nbsp;
+            Corr / edge: <b>1</b>&nbsp;&nbsp; <input id="numLinksSlider" type="text" class="span2" value="" data-slider-min="1" data-slider-max="10"
+                   data-slider-step="1" data-slider-value="[1,10]" > &nbsp;&nbsp;<b><span id="maxLink"></span></b>
+        </div>
+
+      <!-- =============================================================== -->
+      <!--  NETWORK  -->
+      <div id="network" class="col-xs-12 bootstro"
+          data-bootstro-title="(Bipartite) network"
+          data-bootstro-step = "4"
+           data-bootstro-content="This network visualises the correlations of genomic elements between
+                               300 bins of the given species' genome. In humans a bin is 10 Megabase
+                               Pair (Mbp) long. The network acts as a high-level overview of the
+                               entire genome, allowing us to spot large trends. 12 o' clock
+                               represents the first chromosome of the species and the bins are
+                               layed out clockwise grouped together by their chromosome.<br>
+
+                               <br><b>Nodes:</b> the size of the nodes are determined by the total
+                               number of correlations within a given bin.
+
+                               <br><b>Interactive labels:</b> the labels indicate the chromosome
+                               number, start and end of the bin in 10 Mbp units.
+                               Bringing the mouse over these labels will highlight the given node's
+                               connections, while clicking on it will fix these highlighted edges
+                               as the active selection, and filter the tables on the right accordingly
+                               (see details later).
+
+                               <br><b>Edge width:</b> each edge of the network could contain several
+                               correlations, this is reflected in their width and could be filtered
+                               with the top right slider.
+
+                               <br><b>Edge colour:</b> due to the binning process, a mix of negative
+                               and positive correlations could end up in the same edge. This is
+                               indicated with the color of the edge (see legend above) and could be
+                               filtered with the middle slider at the top.
+
+                               <br><b>Edge bundling:</b> To aid visual interpretation, the edges
+                               could be bundled together with the top left slider. This will attempt
+                               group edges that are heading in the same direction."
+           data-bootstro-placement="right">
+      </div>
+
+  </div>
+
+  <!-- =================================================================== -->
+  <!--  RIGHT COLUMN  -->
+  <div id="rightCol" class="col-md-12 col-lg-6">
+      <!-- =============================================================== -->
+      <!--  TABLES  -->
+      <div class="col-xs-12 bootstro"
+          data-bootstro-title="Interactive, sortable, searchable tables"
+          data-bootstro-content="The network visualisation is interlinked with two interactive,
+                       sortable, searchable tables. One of the tables represents the rows and
+                       the other the columns of the correlation matrix that is being explored.<br>
+
+                       <br><b>Interactive:</b> the tabs at top could be used to switch between
+                       the two tables. Alternatively the <b>&larr;, &rarr; keys</b> could also be used
+                       as shortcuts. Each column could be hidden with the toggle links above the
+                       tables. This can be helpful in providing enough space for the important columns.
+
+                       <br><b>Interlinked tables:</b> clicking on any of the rows (genomic feature)
+                       will open a dropdown table showing the exact rho and p values of the
+                       correlations with the related genomic elements. Switching to the other
+                       table will now only show these related elements.
+                       The name of the filtered table (at the top in the tab) changes also to
+                       reflect this. If you now click on any of the rows of the filtered table,
+                       it will in turn filter the other table we have started with.
+
+                       <br><b>Interlinked with the network:</b> rolling the mouse over a row
+                       (genomic feature) will highlight it in the network on the left. Conversely
+                       clicking on any of the labels of the network will filter both tables to only
+                       show the genomic elements which are in the selected region of the genome.
+                       The name of the tables in tabs at the top will change accordingly.
+
+                       <br><b>Scatter plots:</b> If a row of the table is clicked, a subtable will
+                       be displayed as a dropdown that shows all the features that are correlated
+                       with the clicked one. Hovering over any of these features in the subtable
+                       will display a scatter plot of the raw that went into the correlation. This
+                       could be switched off with the scatter-toogle at the top left menu.
+
+                       <br><b>Resetting selection:</b> any selection made by clicking on a label of
+                       the network, or a row of the tables could be reset with the <b>Esc key</b>, or
+                       pressing the 'Reset' button at the top of the tables.
+
+                       <br><b>Sortable:</b> by default, the tables are sorted according to the
+                       location of the genomic elements, starting at the chromosome with the
+                       smallest number (bin at 12 o' clock in the network). Clicking on any of the
+                       table headers will sort the given column in ascending order, then (once clicked
+                       again) in descending order. Clicking a 3rd time will cancel the sorting. The
+                       tables could also be sorted by multiple columns simultaneously: simply hold
+                       down the <b>Shift key</b> while clicking multiple column headers.
+
+                       <br><b>Searchable:</b> using the search bar at the top right, the tables could be
+                       easily searched for any genomic element. This is particularly useful if the
+                       uploaded annotation files have additional columns besides the mandatory ones,
+                       holding extra information about the genomic elements such as gene description,
+                       GO number or KEGG pathway."
+          data-bootstro-step = "6"
+          data-bootstro-placement="left">
+
+          <ul class="nav nav-tabs" role="tablist">
+              <li class="active">
+                  <a id="tab1" href="#tab-table1" data-toggle="tab">
+                          gene expression
+                  </a>
+              </li>
+              <li>
+                  <a id="tab2" href="#tab-table2" data-toggle="tab">
+                          CNA
+                  </a>
+              </li>
+          </ul>
+
+          <div class="tab-content" style="padding-top: 15px">
+              <div class="tab-pane active" id="tab-table1">
+                  <table id="table1" class="table table-striped table-bordered" cellspacing="0" width="100%"></table>
+              </div>
+              <div class="tab-pane" id="tab-table2">
+                  <table id="table2" class="table table-striped table-bordered" cellspacing="0" width="100%"></table>
+              </div>
+          </div>
+      </div>
+  </div>
+</div>
+
+<!-- ===================================================================== -->
+<!--  TOOLTIPS -->
+<div class="row">
+    <div id="tooltip" class="col-lg-12 hidden">
+        <p><span id="value"/></p>
+    </div>
+</div>
+
+<link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
+<script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+<script src="{{ url_for('static', filename='js/bootstro.js') }}"></script>
+<script src="{{ url_for('static', filename='js/bootstrap-slider.js') }}"></script>
+<script src="https://cdn.datatables.net/1.10.12/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/plug-ins/1.10.12/sorting/natural.js"></script>
+<script src="https://cdn.datatables.net/1.10.12/js/dataTables.bootstrap.min.js"></script>
+<script src="{{ url_for('static', filename='demo/family/dataset1_2_network.js') }}"></script>
+<script src="{{ url_for('static', filename='demo/family/dataset1_2_vars.js') }}"></script>
+
+<script type="text/javascript">
+
+  var data_file = "dataset1_2";
+  var vis_genomic_intro = 0;
+  var img_folder = "{{ url_for('static', filename='demo/family/img/') }}";
+  var table1_loc = "{{ url_for('static', filename='demo/family/dataset1_2_row-table.json') }}";
+  var table2_loc = "{{ url_for('static', filename='demo/family/dataset1_2_column-table.json') }}";
+  var table1_name = "gene expression";
+  var table2_name = "CNA";
+
+  $('#edgeBundlingSlider').slider();
+  $('#corrFilterSlider').slider();
+  $('#numLinksSlider').slider();
+  // add max link number to numLinksSlider
+  $('#maxLink').text(maxLink);
+  $('#numLinksSlider').data('slider').max = maxLink;
+  $('#numLinksSlider').slider('setValue', [1, maxLink], true);
+
+  function help(){
+      bootstro.start('.bootstro', {
+          onComplete: function (params) {
+              alert("You have reached the end of the tour. Press 'Ok I got it' button or the Esc key to exit.");
+          }
+      })
+  };
+  $( document ).ready(help);
+  $('#help').click(help);
+</script>
+
+<script src="{{ url_for('static', filename='js/vis_genomic_full.js') }}"></script>
+{% endblock %}

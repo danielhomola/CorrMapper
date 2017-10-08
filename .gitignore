@@ -1,0 +1,10 @@
+*.pyc
+.idea/
+.log
+.db
+.rdb
+.txt
+.conf
+.ipynb
+
+

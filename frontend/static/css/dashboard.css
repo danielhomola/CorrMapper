@@ -1,0 +1,33 @@
+/* main.css: Add and override styles */
+.dc-data-count small {
+  font-size: 20px;
+}
+
+.dc-chart .axis text{
+  font-size: 12px;
+}
+
+text {
+  font-size: 12px;
+}
+
+a { cursor: pointer }
+
+.title{
+  padding-left: 30px;
+  padding-top: 0px;
+  margin-top: -30px;
+  color: #2f2f2f;
+}
+
+.pca-controls {
+  margin-top: -10px;
+  margin-right: -10px;
+  margin-left: -10px;
+}
+
+.pca{
+  margin-top: 10px;
+  margin-right: -15px;
+  margin-left: -15px;
+}
