@@ -8,7 +8,6 @@ In the current version of CorrMapper we not allow users to upload chromo files.
 They are only allowed to choose from the predifened ones. But the
 check_chromo_file and bin_maker functions are kept at the end of this module
 for creating new binnings if the users request it.
-
 """
 
 import inspect
