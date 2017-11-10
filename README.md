@@ -34,7 +34,7 @@ generalisation error of your model will be underestimated. See Chapter 7.10.2
 __CorrMapper's overall flowchart__
 
 <p align="center">
-  <img src="frontend/static/img/overview.svg" alt="CorrMapper pipeline"/>
+  <img src="https://github.com/danielhomola/CorrMapper/blob/master/frontend/static/img/overview.png?raw=true"  alt="CorrMapper pipeline"/>
 </p>
 
 
@@ -99,7 +99,7 @@ live. The whole point of the ScienceFlask project is to make the lives of other
 Here's what the backend of CorrMapper is actually doing to the uploaded data:
 
 <p align="center">
-  <img src="frontend/static/img/pipeline.svg" alt="CorrMapper backend"/>
+  <img src="https://github.com/danielhomola/CorrMapper/blob/master/frontend/static/img/pipeline.png?raw=true"  alt="CorrMapper backend"/>
 </p>
 
 
